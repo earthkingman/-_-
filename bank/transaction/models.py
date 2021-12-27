@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-class Deposit(models,Model):
+class Withdraw(models.Model):
     id = models.IntegerField
     new_balance = models.PositiveBigIntegerField
     old_balance = models.PositiveBigIntegerField
