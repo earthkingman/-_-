@@ -79,8 +79,31 @@ class WithdrawView(View):
             self.withdraw(ex_account, withdraw_amount, description)
             return JsonResponse({'Message':'SUCCESS'},status=201)
         except KeyError:
-            return JsonResponse({'Message':'ERROR'},status=400) 
+            return JsonResponse({'Message':'ERROR'},status=400)
 
+    @transaction.atomic
+    def withdraw(self, ex_account, withdraw_amount, description):
+
+        amount_after_transaction = self.update_account(withdraw_amount, ex_account) #해당 계좌 잔액 수정
+
+        transaction_history = self.create_transaction(withdraw_amount, description, ex_account) #거래 내역 생성
+        
+        #return amount_after_transaction, transaction_history
+
+    def update_account(self, withdraw_amount, ex_account):
+        ex_account.balance = ex_account.balance - withdraw_amount
+        ex_account.save()
+        return ex_account
+
+    def create_transaction(self, withdraw_amount, description, ex_account):
+        transaction_history = Transaction.objects.create(
+            account = ex_account,
+            amount = withdraw_amount,
+            balance = ex_account.balance,
+            t_type = "출금",
+            description = description
+        )
+        return transaction_history
 
 def check_exit(authenticated_user, account_number):
         # get_object_or_404() 사용한 방법
