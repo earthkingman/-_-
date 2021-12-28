@@ -1,6 +1,7 @@
 from django.urls import path
-from . import views
+from account.views import AccountView
 urlpatterns = [
-    path('/<int:id>', views.detail, name = 'detail'),
-    path('/list', views.list, name = 'list')
+    path("", AccountView.as_view()),
+    # path('/<int:id>', views.detail, name = 'detail'),
+    # path('/list', views.list, name = 'list')
 ]  
