@@ -1,10 +1,10 @@
-import json
+import json, bcrypt
 from datetime import datetime, timedelta
 from django.http  import JsonResponse
 from django.views import View
 # from django.db import transaction
-# from users.models import User
-# from account.models import Account
+from users.models import User
+from account.models import Account
 from transaction.models import Transaction
 
 from transaction.tradeClass import Trade
@@ -58,3 +58,25 @@ class WithdrawView(View, Trade):
 
         except KeyError:
             return JsonResponse({'Message':'ERROR'},status=400)
+
+ 
+class SeedView(View, Trade):
+    def post(self, request):
+        try :
+            for i in range(1, 11):
+                user = User.objects.create(
+                    email        = "test" + str(i) + "@8Percent.com",
+                    password     = bcrypt.hashpw("1234".encode('utf-8'),bcrypt.gensalt()).decode('utf-8')
+                    )
+                account = Account.objects.create(
+                    user = user,
+                    account_number = "계좌" + str(i),
+                    balance = 1000
+                )
+                for j in range(1, 20):
+                    super().trade(account, 100 , "월급", "입금")
+                    super().trade(account, 50 , "카드값", "출금")
+            return JsonResponse({'Message':'SUCCESS'},status=200)
+
+        except KeyError:
+            return JsonResponse({'Message':'KEY_ERROR'},status=400)
