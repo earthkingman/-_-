@@ -7,6 +7,7 @@ from users.models import User
 from account.models import Account
 from transaction.models import Transaction
 
+from django.core.paginator import Paginator ,EmptyPage, PageNotAnInteger
 from transaction.tradeClass import Trade
 from django.shortcuts import render, get_object_or_404
 from users.utils      import login_decorator
@@ -64,6 +65,62 @@ class WithdrawView(View, Trade):
 
         except KeyError:
             return JsonResponse({'Message':'ERROR'},status=400)
+
+
+class ListView(View, Trade):
+    @login_decorator ## 해당 계좌, 페이지
+    def get(self, request):
+        try:
+            user = request.user
+            account_number = request.GET.get("account_number", None)
+            t_type = request.GET.get("t_type", None)
+            date = request.GET.get("date", None)
+            page = request.GET.get('page', 1)
+ 
+             ## 해당계좌의 소유주가 맞는지 확인
+            ex_account = Account.objects.get(account_number = account_number, user_id = user.id)
+            if ex_account == None :
+                return JsonResponse({'Message':'AUTH_ERROR'},status=400)
+            
+            results = self.get_transaction_list(ex_account, page, t_type, date)
+        
+            return JsonResponse({'Message':'SUCCESS', 'Data': results}, status=201)
+        except KeyError:
+            return JsonResponse({'Message':'ERROR'}, status=400)
+
+    def get_transaction_list(self, ex_account, page, t_type, date):
+        
+             # Transaction 테이블의 해당 계좌 모든 거래내역을 불러온다.
+            if t_type != None :
+                transaction_list = Transaction.objects.filter(account_id = ex_account.id, t_type = t_type)
+            elif date != None :
+                transaction_list = Transaction.objects.filter(account_id = ex_account.id, created_at = date)
+            else :
+                transaction_list = Transaction.objects.filter(account_id = ex_account.id)
+            #     
+            # # Transaction 테이블의 모든 거래내역을 페이지네이터에서 10개씩 저장한다.
+            try:
+                paginator = Paginator(transaction_list, 10)
+                page_obj = paginator.page(page) # page_obj = paginator.get_page(page)
+                results = [{
+                    '계좌 번호'   : ex_account.account_number,
+                    '거래 후 잔액': page.balance,
+                    '금액'      : page.amount,
+                    '적요'      : page.description,
+                    '거래 종류'  : page.t_type,
+                    '거래 일시'  : page.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    }for page in page_obj]
+                return results
+
+            except PageNotAnInteger:
+                page_obj = paginator.page(1)
+            except EmptyPage:
+                page_obj = paginator.page(paginator.num_pages)
+
+         
+            except KeyError:
+                return False
+
 
  
 class SeedView(View, Trade):
