@@ -35,7 +35,7 @@ def login(request):
 
             if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 access_token = jwt.encode({'id': user.id
-                , "exp": datetime.utcnow() + timedelta(minutes=30)}
+                , "exp": datetime.utcnow() + timedelta(minutes=900000000)}
                 , SECRET_KEY
                 , algorithm="HS256")
 
