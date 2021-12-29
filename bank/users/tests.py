@@ -2,7 +2,7 @@ from django.test import TestCase, Client
 import bcrypt
 from unittest.mock import MagicMock, patch
 import json
-from .models import User
+from users.models import User
 # Create your tests here.
 
 class SignUpTest(TestCase):

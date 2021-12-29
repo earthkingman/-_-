@@ -24,16 +24,19 @@ class DepositView(View, Trade):
             t_type = data['t_type']
             
             if super().check_exit(authenticated_user, account_number) == False :# 계좌 존재 확인
-                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
-
+                return JsonResponse({'Message':'EXIT_ERROR'},status=401)
+                
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인
-                return JsonResponse({'Message':'AUTH_ERROR'},status=400)
+                return JsonResponse({'Message':'AUTH_ERROR'},status=402)
                 
-            super().trade(ex_account, deposit_amount, description, t_type)
-            return JsonResponse({'Message':'SUCCESS'},status=201)
+            data = super().trade(ex_account, deposit_amount , description, t_type)
+            if data == False : # 거래 가능 확인 및 거래 실시
+                return JsonResponse({'Message':'BALANCE_ERROR'},status=403)
+
+            return JsonResponse({'Message':'SUCCESS',"Data" : data}, status=201)
         except KeyError:
-            return JsonResponse({'Message':'ERROR'},status=400) 
+            return JsonResponse({'Message':'ERROR'},status=405) 
     
 class WithdrawView(View, Trade):
     @login_decorator
@@ -53,10 +56,11 @@ class WithdrawView(View, Trade):
             if ex_account == False :# 계좌 권한 확인
                 return JsonResponse({'Message':'AUTH_ERROR'},status=400)
             
-            if super().trade(ex_account, withdraw_amount , description, t_type) == False : # 거래 가능 확인 및 거래 실시
+            data = super().trade(ex_account, withdraw_amount , description, t_type)
+            if data == False : # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message':'BALANCE_ERROR'},status=400)
 
-            return JsonResponse({'Message':'SUCCESS'},status=201)
+            return JsonResponse({'Message':'SUCCESS',"Data" : data}, status=201)
 
         except KeyError:
             return JsonResponse({'Message':'ERROR'},status=400)
@@ -75,7 +79,7 @@ class SeedView(View, Trade):
                     account_number = "계좌" + str(i),
                     balance = 1000
                 )
-                for j in range(1, 20):
+                for j in range(1, 50000):
                     super().trade(account, 100 , "월급", "입금")
                     super().trade(account, 50 , "카드값", "출금")
             return JsonResponse({'Message':'SUCCESS'},status=200)

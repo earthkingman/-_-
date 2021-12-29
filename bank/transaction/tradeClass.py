@@ -45,8 +45,17 @@ class Trade:
             amount_after_transaction = self.update_account(amount * -1, ex_account) #해당 계좌 잔액 수정
         elif t_type == "입금":
             amount_after_transaction = self.update_account(amount, ex_account) #해당 계좌 잔액 수정
-        if amount_after_transaction == False :
+        
+        if amount_after_transaction == False : # 잔액 부족으로 거래 불가능
             return False
         transaction_history = self.create_transaction(amount, description, ex_account, t_type) #거래 내역 생성
         
-        return amount_after_transaction, transaction_history
+        data = {
+            "거래 계좌" : transaction_history.account.account_number,
+            "거래 금액" : transaction_history.amount,
+            "거래 후 금액" : transaction_history.balance,
+            "거래 종류" : transaction_history.t_type,
+            "거래 날짜" : transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            "적요" : description
+        }
+        return data
