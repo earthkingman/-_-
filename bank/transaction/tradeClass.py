@@ -4,9 +4,11 @@ from account.models import Account
 from django.db import transaction
 
 class Trade:
-  
+    
     def update_account(self, amount, ex_account):
         ex_account.balance = ex_account.balance + amount
+        if ex_account.balance < 0:
+            return False
         ex_account.save()
         return ex_account
 
@@ -28,7 +30,7 @@ class Trade:
                 ex_account = Account.objects.get(account_number = account_number)
             except Account.DoesNotExist:
                 return False
-        
+
     def check_auth(self, authenticated_user, account_number):
             try:
                 ex_account = Account.objects.get(account_number = account_number, user = authenticated_user)
@@ -43,7 +45,8 @@ class Trade:
             amount_after_transaction = self.update_account(amount * -1, ex_account) #해당 계좌 잔액 수정
         elif t_type == "입금":
             amount_after_transaction = self.update_account(amount, ex_account) #해당 계좌 잔액 수정
-
+        if amount_after_transaction == False :
+            return False
         transaction_history = self.create_transaction(amount, description, ex_account, t_type) #거래 내역 생성
         
         return amount_after_transaction, transaction_history

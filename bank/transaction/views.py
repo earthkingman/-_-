@@ -47,13 +47,15 @@ class WithdrawView(View, Trade):
             t_type = data['t_type']
             
             if super().check_exit(authenticated_user, account_number) == False :# 계좌 존재 확인
-                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
+                return JsonResponse({'Message':'EXIST_ERROR'},status=400)
 
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인
                 return JsonResponse({'Message':'AUTH_ERROR'},status=400)
-                
-            super().trade(ex_account, withdraw_amount , description, t_type)
+            
+            if super().trade(ex_account, withdraw_amount , description, t_type) == False : # 거래 가능 확인 및 거래 실시
+                return JsonResponse({'Message':'BALANCE_ERROR'},status=400)
+
             return JsonResponse({'Message':'SUCCESS'},status=201)
 
         except KeyError:
