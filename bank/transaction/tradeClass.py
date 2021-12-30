@@ -22,14 +22,6 @@ class Trade:
         )
         return transaction_history
 
-    def check_exit(self, authenticated_user, account_number):
-            # get_object_or_404() 사용한 방법
-            # ex_account = get_object_or_404(Account, account_number = account_number)  -> 명확한 에러를 못보여줌
-            # auth = get_object_or_404(Account, account_number = account_number, user = authenticated_user)
-            try: # 명확한 에러를 보여줌
-                ex_account = Account.objects.get(account_number = account_number)
-            except Account.DoesNotExist:
-                return False
 
     def check_auth(self, authenticated_user, account_number):
             try:

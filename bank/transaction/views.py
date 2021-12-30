@@ -24,20 +24,20 @@ class DepositView(View, Trade):
             description = data['description']
             t_type = data['t_type']
             
-            if super().check_exit(authenticated_user, account_number) == False :# 계좌 존재 확인
-                return JsonResponse({'Message':'EXIT_ERROR'},status=401)
-                
+            if not Account.objects.filter(account_number = account_number).exists(): # 계좌 존재 확인
+                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
+
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인
-                return JsonResponse({'Message':'AUTH_ERROR'},status=402)
+                return JsonResponse({'Message':'AUTH_ERROR'},status=400)
                 
             data = super().trade(ex_account, deposit_amount , description, t_type)
             if data == False : # 거래 가능 확인 및 거래 실시
-                return JsonResponse({'Message':'BALANCE_ERROR'},status=403)
+                return JsonResponse({'Message':'BALANCE_ERROR'},status=400)
 
             return JsonResponse({'Message':'SUCCESS',"Data" : data}, status=201)
         except KeyError:
-            return JsonResponse({'Message':'ERROR'},status=405) 
+            return JsonResponse({'Message':'ERROR'},status=400) 
     
 class WithdrawView(View, Trade):
     @login_decorator
@@ -50,9 +50,9 @@ class WithdrawView(View, Trade):
             description = data['description']
             t_type = data['t_type']
             
-            if super().check_exit(authenticated_user, account_number) == False :# 계좌 존재 확인
-                return JsonResponse({'Message':'EXIST_ERROR'},status=400)
-
+            if not Account.objects.filter(account_number = account_number).exists(): # 계좌 존재 확인
+                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
+                
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인
                 return JsonResponse({'Message':'AUTH_ERROR'},status=400)
@@ -116,13 +116,9 @@ class ListView(View, Trade):
                 page_obj = paginator.page(1)
             except EmptyPage:
                 page_obj = paginator.page(paginator.num_pages)
-
-         
             except KeyError:
                 return False
 
-
- 
 class SeedView(View, Trade):
     def post(self, request):
         try :
