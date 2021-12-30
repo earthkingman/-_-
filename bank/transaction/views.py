@@ -99,8 +99,7 @@ class ListView(View, Trade):
                 transaction_list = Transaction.objects.filter(account_id = ex_account.id, created_at__range = (start_date, end_date))
             else :
                 transaction_list = Transaction.objects.filter(account_id = ex_account.id)
-            #     
-            # # Transaction 테이블의 모든 거래내역을 페이지네이터에서 10개씩 저장한다.
+
             try:
                 paginator = Paginator(transaction_list, 10)
                 page_obj = paginator.page(page) # page_obj = paginator.get_page(page)
@@ -138,32 +137,29 @@ class ListOffSetView(View, Trade):
             if ex_account == None :
                 return JsonResponse({'Message':'AUTH_ERROR'},status=400)
                 
-            ## 해당 사용자 거래 전체 갯수
-            TRANSACTION_COUNT = Transaction.objects.filter(account_id = ex_account.id).count()
-            
             if t_type != None :
-                TRANSACTION_COUNT = Transaction.objects.filter(account_id = ex_account.id,  t_type = t_type).count()
+                list_count = Transaction.objects.filter(account_id = ex_account.id,  t_type = t_type).count()
                 transaction_list = Transaction.objects.filter(account_id = ex_account.id, t_type = t_type).order_by("id")[OFFSET:LIMIT]
             elif started_at != None and end_at != None:
                 start_date = datetime.strptime(started_at, '%Y-%m-%d')
                 end_date   = datetime.strptime(end_at, '%Y-%m-%d')
-                TRANSACTION_COUNT = Transaction.objects.filter(account_id = ex_account.id, created_at__range = (start_date, end_date)).count()
+                list_count = Transaction.objects.filter(account_id = ex_account.id, created_at__range = (start_date, end_date)).count()
                 transaction_list = Transaction.objects.filter(account_id = ex_account.id, created_at__range = (start_date, end_date)).order_by("id")[OFFSET:LIMIT]
             else :
-                TRANSACTION_COUNT = Transaction.objects.filter(account_id = ex_account.id, t_type = t_type).count()
+                list_count = Transaction.objects.filter(account_id = ex_account.id).count()
                 transaction_list = Transaction.objects.filter(account_id = ex_account.id).order_by("id")[OFFSET:LIMIT]
-     
-    
+
+            print(transaction_list.query)
             results = [{
-                    '계좌 번호'   : ex_account.account_number,
-                    '거래 후 잔액': transaction.balance,
-                    '금액'      : transaction.amount,
-                    '적요'      : transaction.description,
-                    '거래 종류'  : transaction.t_type,
-                    '거래 일시'  : transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    '계좌 번호'    : ex_account.account_number,
+                    '거래 후 잔액' : transaction.balance,
+                    '금액'       : transaction.amount,
+                    '적요'       : transaction.description,
+                    '거래 종류'   : transaction.t_type,
+                    '거래 일시'   : transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
                     }for transaction in transaction_list]
         
-            return JsonResponse({'Message':'SUCCESS', 'Data': results, 'TotalCount': TRANSACTION_COUNT}, status=201)
+            return JsonResponse({'Message':'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=201)
         except KeyError:
             return JsonResponse({'Message':'ERROR'}, status=400)
 
@@ -171,22 +167,25 @@ class ListOffSetView(View, Trade):
 class SeedView(View, Trade):
     def post(self, request):
         try :
+            
+            for i in range(1, 11):
+                user = User.objects.create(
+                    email        = "test" + str(i) + "@8Percent.com",
+                    password     = bcrypt.hashpw("1234".encode('utf-8'),bcrypt.gensalt()).decode('utf-8')
+                    )
+                account = Account.objects.create(
+                    user = user,
+                    account_number = "계좌" + str(i),
+                    balance = 1000
+                )
             account = Account.objects.get(account_number = "계좌1")
-            # for i in range(1, 11):
-            #     user = User.objects.create(
-            #         email        = "test" + str(i) + "@8Percent.com",
-            #         password     = bcrypt.hashpw("1234".encode('utf-8'),bcrypt.gensalt()).decode('utf-8')
-            #         )
-            #     account = Account.objects.create(
-            #         user = user,
-            #         account_number = "계좌" + str(i),
-            #         balance = 1000
-            #     )
             for j in range(1, 300000):
                 print(j)
                 super().trade(account, 100 , "월급", "입금")
                 super().trade(account, 50 , "카드값", "출금")
                 super().trade(account, 30 , "비트코인", "출금")
+                super().trade(account, 5 , "햄버거", "출금")
+                super().trade(account, 5 , "피자", "출금")
             return JsonResponse({'Message':'SUCCESS'},status=200)
 
         except KeyError:
