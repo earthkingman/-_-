@@ -25,7 +25,7 @@ class DepositView(View, Trade):
             t_type = data['t_type']
             
             if not Account.objects.filter(account_number = account_number).exists(): # 계좌 존재 확인
-                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
+                return JsonResponse({'Message':'EXIST_ERROR'},status=400)
 
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인
@@ -51,7 +51,7 @@ class WithdrawView(View, Trade):
             t_type = data['t_type']
             
             if not Account.objects.filter(account_number = account_number).exists(): # 계좌 존재 확인
-                return JsonResponse({'Message':'EXIT_ERROR'},status=400)
+                return JsonResponse({'Message':'EXIST_ERROR'},status=400)
                 
             ex_account = super().check_auth(authenticated_user, account_number)
             if ex_account == False :# 계좌 권한 확인

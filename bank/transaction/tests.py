@@ -63,34 +63,63 @@ class DealViewTest(TestCase) :
         "적요": "월급"
         }})
 
-    ## 계좌가 존재하지 않는 경우
-    def test_deal_post_success(self):
+    ##  계좌가 존재하지 않는 경우
+    def test_deal_post_account_does_not_exist(self):
         client = Client()
         
         deal_info = {
-            "account_number":"계좌1",
+            "account_number":"존재하지 않는 계좌",
             "amount":100,
             "description": "월급",
             "t_type" : "입금"
         }
         current_time = datetime.now()
         response = client.post('/transaction/deposit', json.dumps(deal_info), content_type='application/json', **headers1)
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.json(),{
-        "Message": "SUCCESS",
-        "Data": {
-        "거래 계좌": "계좌1",
-        "거래 금액": 100,
-        "거래 후 금액": 1100,
-        "거래 종류": "입금",
-        "거래 날짜": current_time.strftime('%Y-%m-%d %H:%M:%S'),
-        "적요": "월급"
-        }})
-
-    ## 잔액이 부족할 경우
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"Message": "EXIST_ERROR"})
 
 
+    ## 출금 잔액이 부족할 경우
+    def test_deal_post_insufficient_balance(self):
+        client = Client()
+        
+        deal_info = {
+            "account_number":"계좌1",
+            "amount":10000,
+            "description": "월급",
+            "t_type" : "출금"
+        }
+        current_time = datetime.now()
+        response = client.post('/transaction/deposit', json.dumps(deal_info), content_type='application/json', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"Message": "BALANCE_ERROR"})
+    
     ## 거래 금액이 0보다 같거나 작을 경우
-
+    # def test_deal_post_abnormal_balance(self):
+    #     client = Client()
+        
+    #     deal_info = {
+    #         "account_number":"계좌1",
+    #         "amount": -1,
+    #         "description": "월급",
+    #         "t_type" : "출금"
+    #     }
+    #     current_time = datetime.now()
+    #     response = client.post('/transaction/deposit', json.dumps(deal_info), content_type='application/json', **headers1)
+    #     self.assertEqual(response.status_code, 400)
+    #     self.assertEqual(response.json(), {"Message": "BALANCE_ERROR"})
 
     ## 계좌 소유주가 아닐 경우
+    def test_deal_post_no_permission(self):
+        client = Client()
+        
+        deal_info = {
+            "account_number":"계좌2",
+            "amount": 10,
+            "description": "월급",
+            "t_type" : "출금"
+        }
+        current_time = datetime.now()
+        response = client.post('/transaction/deposit', json.dumps(deal_info), content_type='application/json', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"Message": "AUTH_ERROR"})
