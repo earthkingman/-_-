@@ -4,4 +4,4 @@ urlpatterns = [
     path("", AccountView.as_view()),
     # path('/<int:id>', views.detail, name = 'detail'),
     # path('/list', views.list, name = 'list')
-]  
+]

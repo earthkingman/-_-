@@ -5,6 +5,7 @@ import json
 from users.models import User
 # Create your tests here.
 
+
 class SignUpTest(TestCase):
     def test_signup_success(self):
         client = Client()
@@ -27,7 +28,8 @@ class SignUpTest(TestCase):
 
     def tearDown(self):
         User.objects.all().delete()
-      
+
+    # 회원가입 아아디 중복
     def test_signupview_post_duplicated_user(self):
         client = Client()
         user = {
@@ -41,20 +43,23 @@ class SignUpTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"Message": "USER_ALREADY_EXISTS"})
 
+
 class LoginTest(TestCase):
     def setUp(self):
         User.objects.create(
             email="ji-park@42seoul.com",
-            password=bcrypt.hashpw('42seoul'.encode('utf-8'), bcrypt.gensalt()).decode('utf-8'),
+            password=bcrypt.hashpw('42seoul'.encode(
+                'utf-8'), bcrypt.gensalt()).decode('utf-8'),
         )
+
     def tearDown(self):
         User.objects.all().delete()
 
     def test_login_success(self):
         client = Client()
         user = {
-            "email" : "ji-park@42seoul.com",
-            "password" : "42seoul",
+            "email": "ji-park@42seoul.com",
+            "password": "42seoul",
         }
 
         response = client.post(
@@ -63,11 +68,12 @@ class LoginTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
 
+    # 미등록 아이디
     def test_login_unregistered_user(self):
         client = Client()
         user = {
-            "email" : "ji-park2@42seoul.com",
-            "password" : "42seoul",
+            "email": "ji-park2@42seoul.com",
+            "password": "42seoul",
         }
         response = client.post(
             "/users/login", json.dumps(user), content_type="application/json"
@@ -76,12 +82,12 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json(), {"Message": "USER_DOES_NOT_EXIST"})
 
-
+    # 비밀번호 오류
     def test_login_invalid_password(self):
         client = Client()
         user = {
-            "email" : "ji-park@42seoul.com",
-            "password" : "42seoul2",
+            "email": "ji-park@42seoul.com",
+            "password": "42seoul2",
         }
         response = client.post(
             "/users/login", json.dumps(user), content_type="application/json"

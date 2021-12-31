@@ -2,6 +2,8 @@ from django.db import models
 from account.models import Account
 
 # Create your models here.
+
+
 class Transaction(models.Model):
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     balance = models.PositiveBigIntegerField()
