@@ -6,7 +6,6 @@ from django.views import View
 from users.models import User
 from account.models import Account
 from transaction.models import Transaction
-
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from transaction.tradeClass import Trade
 from django.shortcuts import render, get_object_or_404
@@ -79,66 +78,6 @@ class ListView(View, Trade):
             t_type = request.GET.get("t_type", None)
             started_at = request.GET.get("started_at", None)
             end_at = request.GET.get("end_at", None)
-            page = request.GET.get('page', 1)
-
-            ex_account = Account.objects.get(
-                account_number=account_number, user_id=user.id)
-            if ex_account == None:
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
-
-            results = self.get_transaction_list(
-                ex_account, page, t_type, started_at, end_at)
-
-            return JsonResponse({'Message': 'SUCCESS', 'Data': results}, status=201)
-        except KeyError:
-            return JsonResponse({'Message': 'ERROR'}, status=400)
-
-    def get_transaction_list(self, ex_account, page, t_type, started_at, end_at):
-
-        # Transaction 테이블의 해당 계좌 모든 거래내역을 불러온다.
-        if t_type != None:
-            transaction_list = Transaction.objects.filter(
-                account_id=ex_account.id, t_type=t_type)
-        elif started_at != None and end_at != None:
-            start_date = datetime.strptime(started_at, '%Y-%m-%d')
-            end_date = datetime.strptime(end_at, '%Y-%m-%d')
-            transaction_list = Transaction.objects.filter(
-                account_id=ex_account.id, created_at__range=(start_date, end_date))
-        else:
-            transaction_list = Transaction.objects.filter(
-                account_id=ex_account.id)
-
-        try:
-            paginator = Paginator(transaction_list, 10)
-            # page_obj = paginator.get_page(page)
-            page_obj = paginator.page(page)
-            results = [{
-                '계좌 번호': ex_account.account_number,
-                '거래 후 잔액': page.balance,
-                '금액': page.amount,
-                '적요': page.description,
-                '거래 종류': page.t_type,
-                '거래 일시': page.created_at.strftime('%Y-%m-%d %H:%M:%S')
-            }for page in page_obj]
-            return results
-
-        except PageNotAnInteger:
-            page_obj = paginator.page(1)
-        except EmptyPage:
-            page_obj = paginator.page(paginator.num_pages)
-        except KeyError:
-            return False
-
-
-class ListOffSetView(View, Trade):
-    @login_decorator  # 해당 계좌, 페이지
-    def get(self, request):
-        try:
-            user = request.user
-            account_number = request.GET.get("account_number", None)
-            t_type = request.GET.get("t_type", None)
-            started_at = request.GET.get("started_at", None)
-            end_at = request.GET.get("end_at", None)
             OFFSET = int(request.GET.get("offset", "0"))
             LIMIT = int(request.GET.get("limit", "10"))
 
@@ -147,25 +86,14 @@ class ListOffSetView(View, Trade):
                 account_number=account_number, user_id=user.id)
             if ex_account == None:
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
-            if t_type != None:
-                list_count = Transaction.objects.filter(
-                    account_id=ex_account.id,  t_type=t_type).count()
-                transaction_list = Transaction.objects.filter(
-                    account_id=ex_account.id, t_type=t_type).order_by("id")[OFFSET:LIMIT]
-            elif started_at != None and end_at != None:
-                start_date = datetime.strptime(started_at, '%Y-%m-%d')
-                end_date = datetime.strptime(end_at, '%Y-%m-%d')
-                list_count = Transaction.objects.filter(
-                    account_id=ex_account.id, created_at__range=(start_date, end_date)).count()
-                transaction_list = Transaction.objects.filter(account_id=ex_account.id, created_at__range=(
-                    start_date, end_date)).order_by("id")[OFFSET:LIMIT]
-            else:
-                list_count = Transaction.objects.filter(
-                    account_id=ex_account.id).count()
-                transaction_list = Transaction.objects.filter(
-                    account_id=ex_account.id).order_by("id")[OFFSET:LIMIT]
 
-            print(transaction_list.query)
+            filters = self.transaction_list_filter(
+                ex_account, started_at, end_at, t_type)
+
+            list_count = Transaction.objects.filter(**filters).count()
+            transaction_list = Transaction.objects.filter(
+                **filters).order_by("id")[OFFSET:LIMIT]
+
             results = [{
                 '계좌 번호': ex_account.account_number,
                 '거래 후 잔액': transaction.balance,
@@ -179,11 +107,27 @@ class ListOffSetView(View, Trade):
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
+    def transaction_list_filter(self, account, started_at, end_at, t_type):
+        filters = {'account': account}
+
+        if t_type == "출금":
+            filters['t_type'] = "출금"
+        elif t_type == "입금":
+            filters['t_type'] = "입금"
+
+        if started_at and end_at:
+            start_date = datetime.strptime(started_at, '%Y-%m-%d')
+            end_date = datetime.strptime(end_at, '%Y-%m-%d')
+            end_date = end_date + timedelta(days=1)
+            filters['created_at__gte'] = start_date
+            filters['created_at__lt'] = end_date
+
+        return filters
+
 
 class SeedView(View, Trade):
     def post(self, request):
         try:
-
             for i in range(1, 11):
                 user = User.objects.create(
                     email="test" + str(i) + "@8Percent.com",

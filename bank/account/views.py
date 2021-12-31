@@ -17,9 +17,6 @@ class AccountView(View):
         try:
             data = json.loads(request.body)
             user = request.user
-            # if data['account'] == null or data['balance']:
-            #     return JsonResponse({'Message':'ERROR'},status=400)
-            # user = User.objects.get(id=userId)
             Account.objects.create(
                 user=user,
                 account_number=data['account'],
