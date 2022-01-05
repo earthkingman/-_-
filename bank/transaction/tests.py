@@ -43,7 +43,7 @@ class DealViewTest(TestCase):
         Account.objects.all().delete()
         # Transaction.objects.all().delete()
 
-    # 거래 성공
+    # 입금 성공
     def test_deal_post_success(self):
         client = Client()
 

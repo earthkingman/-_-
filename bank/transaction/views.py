@@ -18,11 +18,14 @@ class DepositView(View, Trade):
         try:
             data = json.loads(request.body)
             authenticated_user = request.user
-            account_number = data['account_number']
-            deposit_amount = data['amount']
-            description = data['description']
-            t_type = data['t_type']
+            account_number = str(data['account_number'])
+            deposit_amount = int(data['amount'])
+            description = str(data['description'])
+            t_type = str(data['t_type'])
 
+            # 거래 금액 확인
+            if deposit_amount <= 0:
+                return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)
             # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -36,6 +39,9 @@ class DepositView(View, Trade):
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+
+        except ValueError:
+            return JsonResponse({'Message': 'AMOUNT ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
@@ -46,11 +52,14 @@ class WithdrawView(View, Trade):
         try:
             data = json.loads(request.body)
             authenticated_user = request.user
-            account_number = data['account_number']
-            withdraw_amount = data['amount']
-            description = data['description']
-            t_type = data['t_type']
+            account_number = str(data['account_number'])
+            withdraw_amount = int(data['amount'])
+            description = str(data['description'])
+            t_type = str(data['t_type'])
 
+            # 거래 금액 확인
+            if withdraw_amount <= 0:
+                return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)
             # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -59,11 +68,15 @@ class WithdrawView(View, Trade):
             if ex_account == False:  # 계좌 권한 확인
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
-            data = self.trade(ex_account, withdraw_amount, description, t_type)
+            data = self.trade(
+                ex_account, -1 * withdraw_amount, description, t_type)
             if data == False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+
+        except ValueError:
+            return JsonResponse({'Message': 'AMOUNT ERROR'}, status=400)
 
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)

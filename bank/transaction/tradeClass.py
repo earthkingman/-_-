@@ -34,17 +34,13 @@ class Trade:
     @transaction.atomic
     def trade(self, ex_account, amount, description, t_type):
 
-        if t_type == "출금":
-            amount_after_transaction = self.update_account(
-                amount * -1, ex_account)  # 해당 계좌 잔액 수정
-        elif t_type == "입금":
-            amount_after_transaction = self.update_account(
-                amount, ex_account)  # 해당 계좌 잔액 수정
+        amount_after_transaction = self.update_account(
+            amount, ex_account)  # 해당 계좌 잔액 수정
 
         if amount_after_transaction == False:  # 잔액 부족으로 거래 불가능
             return False
         transaction_history = self.create_transaction(
-            amount, description, ex_account, t_type)  # 거래 내역 생성
+            abs(amount), description, ex_account, t_type)  # 거래 내역 생성
 
         data = {
             "거래 계좌": transaction_history.account.account_number,
