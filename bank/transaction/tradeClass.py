@@ -6,8 +6,11 @@ from django.db import transaction
 
 class Trade:
 
-    def update_account(self, amount, ex_account):
-        ex_account.balance = ex_account.balance + amount
+    def update_account(self, amount, ex_account, t_type):
+        if (t_type == "입금"):
+            ex_account.balance = ex_account.balance + amount
+        elif (t_type == "출금"):
+            ex_account.balance = ex_account.balance - amount
         if ex_account.balance < 0:
             return False
         ex_account.save()
@@ -35,7 +38,7 @@ class Trade:
     def trade(self, ex_account, amount, description, t_type):
 
         amount_after_transaction = self.update_account(
-            amount, ex_account)  # 해당 계좌 잔액 수정
+            amount, ex_account, t_type)  # 해당 계좌 잔액 수정
 
         if amount_after_transaction == False:  # 잔액 부족으로 거래 불가능
             return False

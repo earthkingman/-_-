@@ -92,7 +92,7 @@ class DealViewTest(TestCase):
 
         deal_info = {
             "account_number": "계좌1",
-            "amount": 10000,
+            "amount": 1000000,
             "description": "월급",
             "t_type": "출금"
         }

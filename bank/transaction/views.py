@@ -69,7 +69,7 @@ class WithdrawView(View, Trade):
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
             data = self.trade(
-                ex_account, -1 * withdraw_amount, description, t_type)
+                ex_account, withdraw_amount, description, t_type)
             if data == False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
