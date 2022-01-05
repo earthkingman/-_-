@@ -17,6 +17,10 @@ class AccountView(View):
         try:
             data = json.loads(request.body)
             user = request.user
+
+            if Account.objects.filter(account_number=data['account']).exists():
+                return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
+
             Account.objects.create(
                 user=user,
                 account_number=data['account'],
