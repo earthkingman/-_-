@@ -27,11 +27,11 @@ class DepositView(View, Trade):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = super().check_auth(authenticated_user, account_number)
+            ex_account = self.check_auth(authenticated_user, account_number)
             if ex_account == False:  # 계좌 권한 확인
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
-            data = super().trade(ex_account, deposit_amount, description, t_type)
+            data = self.trade(ex_account, deposit_amount, description, t_type)
             if data == False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
@@ -55,11 +55,11 @@ class WithdrawView(View, Trade):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = super().check_auth(authenticated_user, account_number)
+            ex_account = self.check_auth(authenticated_user, account_number)
             if ex_account == False:  # 계좌 권한 확인
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
-            data = super().trade(ex_account, withdraw_amount, description, t_type)
+            data = self.trade(ex_account, withdraw_amount, description, t_type)
             if data == False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
