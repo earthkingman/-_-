@@ -6,9 +6,7 @@ from django.views import View
 from users.models import User
 from account.models import Account
 from transaction.models import Transaction
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from transaction.helper import update_account, create_transaction, check_auth, trade
-from django.shortcuts import render, get_object_or_404
 from users.utils import login_decorator
 
 
@@ -32,10 +30,9 @@ class DepositView(View):
             # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-
             ex_account = check_auth(authenticated_user, account_number)
-            if ex_account == False:  # 계좌 권한 확인
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
+            if ex_account is False:  # 계좌 권한 확인
+                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
 
             data = trade(ex_account, deposit_amount, description, t_type)
             if data is False:  # 거래 가능 확인 및 거래 실시
@@ -72,7 +69,7 @@ class WithdrawView(View):
 
             ex_account = check_auth(authenticated_user, account_number)
             if ex_account == False:  # 계좌 권한 확인
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
+                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
 
             data = trade(
                 ex_account, withdraw_amount, description, t_type)
@@ -103,7 +100,7 @@ class ListView(View):
             ex_account = Account.objects.get(
                 account_number=account_number, user_id=user.id)
             if ex_account == None:
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
+                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
 
             filters = self.transaction_list_filter(
                 ex_account, started_at, end_at, t_type)
@@ -120,7 +117,7 @@ class ListView(View):
                 '거래 종류': transaction.t_type,
                 '거래 일시': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }for transaction in transaction_list]
-            return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=201)
+            return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
 
         except ValueError:
             return JsonResponse({'Message': 'VALUE ERROR'}, status=400)

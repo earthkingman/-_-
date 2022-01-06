@@ -130,5 +130,5 @@ class DealViewTest(TestCase):
         current_time = datetime.now()
         response = client.post('/transaction/deposit', json.dumps(deal_info),
                                content_type='application/json', **headers1)
-        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json(), {"Message": "AUTH_ERROR"})
