@@ -38,6 +38,7 @@ def login(request):
                 return JsonResponse({'Message': 'USER_DOES_NOT_EXIST'}, status=401)
 
             user = User.objects.get(email=data['email'])
+            userList = User.objects.filter(email=data['email'])
 
             if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 access_token = jwt.encode({'id': user.id, "exp": datetime.utcnow(

@@ -1,15 +1,19 @@
 from django.db import models
 from account.models import Account
+from .validators import validate_amount, validate_balance, validate_type
 
 # Create your models here.
 
 
 class Transaction(models.Model):
-    account = models.ForeignKey(Account, on_delete=models.CASCADE)
-    balance = models.PositiveBigIntegerField()
-    amount = models.PositiveBigIntegerField()
-    t_type = models.CharField(max_length=50)
-    description = models.CharField(max_length=50)
+    account = models.ForeignKey(Account, null=False, on_delete=models.CASCADE)
+    balance = models.PositiveBigIntegerField(
+        null=False, validators=[validate_balance])
+    amount = models.PositiveBigIntegerField(
+        null=False, validators=[validate_amount])
+    t_type = models.CharField(max_length=2, null=False,
+                              validators=[validate_type])
+    description = models.CharField(max_length=50, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
