@@ -24,7 +24,7 @@ class AccountView(View):
             Account.objects.create(
                 user=user,
                 account_number=data['account'],
-                balance=data['balance']
+                balance=0
             )
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 

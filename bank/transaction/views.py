@@ -7,12 +7,12 @@ from users.models import User
 from account.models import Account
 from transaction.models import Transaction
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from transaction.tradeClass import Trade
+from transaction.helper import update_account, create_transaction, check_auth, trade
 from django.shortcuts import render, get_object_or_404
 from users.utils import login_decorator
 
 
-class DepositView(View, Trade):
+class DepositView(View):
     @login_decorator
     def post(self, request):
         try:
@@ -33,12 +33,12 @@ class DepositView(View, Trade):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = self.check_auth(authenticated_user, account_number)
+            ex_account = check_auth(authenticated_user, account_number)
             if ex_account == False:  # 계좌 권한 확인
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
-            data = self.trade(ex_account, deposit_amount, description, t_type)
-            if data == False:  # 거래 가능 확인 및 거래 실시
+            data = trade(ex_account, deposit_amount, description, t_type)
+            if data is False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
@@ -49,7 +49,7 @@ class DepositView(View, Trade):
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
 
-class WithdrawView(View, Trade):
+class WithdrawView(View):
     @login_decorator
     def post(self, request):
         try:
@@ -70,11 +70,11 @@ class WithdrawView(View, Trade):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = self.check_auth(authenticated_user, account_number)
+            ex_account = check_auth(authenticated_user, account_number)
             if ex_account == False:  # 계좌 권한 확인
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=400)
 
-            data = self.trade(
+            data = trade(
                 ex_account, withdraw_amount, description, t_type)
             if data == False:  # 거래 가능 확인 및 거래 실시
                 return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
@@ -88,7 +88,7 @@ class WithdrawView(View, Trade):
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
 
-class ListView(View, Trade):
+class ListView(View):
     @login_decorator  # 해당 계좌, 페이지
     def get(self, request):
         try:
@@ -144,7 +144,7 @@ class ListView(View, Trade):
         return filters
 
 
-class SeedView(View, Trade):
+class SeedView(View):
     def post(self, request):
         try:
             for i in range(1, 11):
@@ -161,11 +161,11 @@ class SeedView(View, Trade):
             account = Account.objects.get(account_number="계좌1")
             for j in range(1, 300000):
                 print(j)
-                super().trade(account, 100, "월급", "입금")
-                super().trade(account, 50, "카드값", "출금")
-                super().trade(account, 30, "비트코인", "출금")
-                super().trade(account, 5, "햄버거", "출금")
-                super().trade(account, 5, "피자", "출금")
+                trade(account, 100, "월급", "입금")
+                trade(account, 50, "카드값", "출금")
+                trade(account, 30, "비트코인", "출금")
+                trade(account, 5, "햄버거", "출금")
+                trade(account, 5, "피자", "출금")
             return JsonResponse({'Message': 'SUCCESS'}, status=200)
 
         except KeyError:
