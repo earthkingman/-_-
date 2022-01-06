@@ -11,9 +11,9 @@ def update_account(amount, ex_account, t_type):
     elif (t_type == "출금"):
         ex_account.balance = ex_account.balance - amount
     else:
-        return False
+        raise ValueError
     if ex_account.balance < 0:
-        return False
+        raise ValueError
     ex_account.save()
     return ex_account
 
@@ -35,7 +35,7 @@ def check_auth(authenticated_user, account_number):
             account_number=account_number, user=authenticated_user)
         return ex_account
     except Account.DoesNotExist:
-        return False
+        raise ValueError
 
 
 @transaction.atomic
@@ -44,8 +44,8 @@ def trade(ex_account, amount, description, t_type):
     amount_after_transaction = update_account(
         amount, ex_account, t_type)  # 해당 계좌 잔액 수정
 
-    if amount_after_transaction == False:  # 잔액 부족으로 거래 불가능
-        return False
+    if amount_after_transaction is ValueError:  # 잔액 부족으로 거래 불가능
+        raise ValueError
     transaction_history = create_transaction(
         abs(amount), description, ex_account, t_type)  # 거래 내역 생성
 

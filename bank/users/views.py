@@ -2,6 +2,7 @@ import json
 import re
 import bcrypt
 import jwt
+from django.views import View
 from datetime import datetime, timedelta
 from django.http import JsonResponse
 from users.models import User
@@ -11,8 +12,8 @@ SECRET_KEY = my_settings.SECRET
 # Create your views here.
 
 
-def signup(request):
-    if request.method == 'POST':
+class SignupView(View):
+    def post(self, request):
         try:
             data = json.loads(request.body)
             hash_password = bcrypt.hashpw(data['password'].encode(
@@ -26,12 +27,10 @@ def signup(request):
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
-    else:
-        return JsonResponse({'Message': 'ERROR'}, status=400)
 
 
-def login(request):
-    if request.method == 'POST':
+class LoginView(View):
+    def post(self, request):
         try:
             data = json.loads(request.body)
             if not User.objects.filter(email=data['email']).exists():
@@ -49,5 +48,3 @@ def login(request):
             return JsonResponse({'Message': 'INVALID_PASSWORD'}, status=401)
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
-    else:
-        return JsonResponse({'Message': 'ERROR'}, status=400)

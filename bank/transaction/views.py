@@ -83,7 +83,6 @@ class WithdrawView(View):
 
         except ValueError:
             return JsonResponse({'Message': 'AMOUNT ERROR'}, status=400)
-
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
@@ -121,8 +120,10 @@ class ListView(View):
                 '거래 종류': transaction.t_type,
                 '거래 일시': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }for transaction in transaction_list]
-
             return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=201)
+
+        except ValueError:
+            return JsonResponse({'Message': 'VALUE ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
@@ -167,6 +168,5 @@ class SeedView(View):
                 trade(account, 5, "햄버거", "출금")
                 trade(account, 5, "피자", "출금")
             return JsonResponse({'Message': 'SUCCESS'}, status=200)
-
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)

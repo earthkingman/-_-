@@ -28,5 +28,7 @@ class AccountView(View):
             )
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
+        except ValueError:
+            return JsonResponse({'Message': 'ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
