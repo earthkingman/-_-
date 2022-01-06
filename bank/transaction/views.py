@@ -23,6 +23,9 @@ class DepositView(View, Trade):
             description = str(data['description'])
             t_type = str(data['t_type'])
 
+            # 거래 종류 확인
+            if t_type != "출금" and t_type != "입금":
+                return JsonResponse({'Message': 'T_TYPE_ERROR'}, status=400)
             # 거래 금액 확인
             if deposit_amount <= 0:
                 return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)
@@ -57,6 +60,9 @@ class WithdrawView(View, Trade):
             description = str(data['description'])
             t_type = str(data['t_type'])
 
+            # 거래 종류 확인
+            if t_type != "출금" and t_type != "입금":
+                return JsonResponse({'Message': 'T_TYPE_ERROR'}, status=400)
             # 거래 금액 확인
             if withdraw_amount <= 0:
                 return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)

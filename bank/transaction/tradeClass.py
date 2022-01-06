@@ -2,15 +2,19 @@ from transaction.models import Transaction
 from users.models import User
 from account.models import Account
 from django.db import transaction
+from django.http import JsonResponse
 
 
 class Trade:
 
     def update_account(self, amount, ex_account, t_type):
+        print(t_type)
         if (t_type == "입금"):
             ex_account.balance = ex_account.balance + amount
         elif (t_type == "출금"):
             ex_account.balance = ex_account.balance - amount
+        else:
+            return False
         if ex_account.balance < 0:
             return False
         ex_account.save()
