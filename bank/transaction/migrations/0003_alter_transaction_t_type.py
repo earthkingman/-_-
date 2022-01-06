@@ -14,6 +14,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='transaction',
             name='t_type',
-            field=models.CharField(max_length=2, validators=[transaction.validators.validate_type]),
+            field=models.CharField(max_length=2, validators=[
+                                   transaction.validators.validate_t_type]),
         ),
     ]

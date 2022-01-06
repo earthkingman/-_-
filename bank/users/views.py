@@ -4,6 +4,7 @@ import bcrypt
 import jwt
 from django.views import View
 from datetime import datetime, timedelta
+from json.decoder import JSONDecodeError
 from django.http import JsonResponse
 from users.models import User
 from django.shortcuts import render
@@ -27,6 +28,8 @@ class SignupView(View):
             )
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
         except KeyError:
@@ -50,6 +53,8 @@ class LoginView(View):
                 return JsonResponse({'TOKEN': access_token}, status=200)
 
             return JsonResponse({'Message': 'INVALID_PASSWORD'}, status=401)
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
         except KeyError:

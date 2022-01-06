@@ -2,12 +2,15 @@ import json
 import bcrypt
 from datetime import datetime, timedelta
 from django.http import JsonResponse
+from json.decoder import JSONDecodeError
 from django.views import View
 from users.models import User
 from account.models import Account
 from transaction.models import Transaction
-from transaction.helper import update_account, create_transaction, check_auth, trade
+from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError, TransactionTypeError
+from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type
 from users.utils import login_decorator
+from django.core.exceptions import ValidationError
 
 
 class DepositView(View):
@@ -16,34 +19,33 @@ class DepositView(View):
         try:
             data = json.loads(request.body)
             authenticated_user = request.user
-            account_number = str(data['account_number'])
-            deposit_amount = int(data['amount'])
-            description = str(data['description'])
-            t_type = str(data['t_type'])
+            account_number = validate_account_number(
+                data['account_number'])
+            deposit_amount = validate_amount(data['amount'])
+            description = validate_description(data['description'])
+            t_type = validate_t_type(data['t_type'])
 
-            # 거래 종류 확인
-            if t_type != "출금" and t_type != "입금":
-                return JsonResponse({'Message': 'T_TYPE_ERROR'}, status=400)
-            # 거래 금액 확인
-            if deposit_amount <= 0:
-                return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)
-            # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
+
             ex_account = check_auth(authenticated_user, account_number)
-            if ex_account is False:  # 계좌 권한 확인
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
 
             data = trade(ex_account, deposit_amount, description, t_type)
-            if data is False:  # 거래 가능 확인 및 거래 실시
-                return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
+        except ValidationError as detail:
+            return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
+        except AccountAuthError:
+            return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
+        except BalanceError:
+            return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
         except ValueError:
-            return JsonResponse({'Message': 'AMOUNT ERROR'}, status=400)
+            return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
 
 
 class WithdrawView(View):
@@ -52,36 +54,31 @@ class WithdrawView(View):
         try:
             data = json.loads(request.body)
             authenticated_user = request.user
-            account_number = str(data['account_number'])
-            withdraw_amount = int(data['amount'])
-            description = str(data['description'])
-            t_type = str(data['t_type'])
+            account_number = validate_account_number(data['account_number'])
+            withdraw_amount = validate_amount(data['amount'])
+            description = validate_description(data['description'])
+            t_type = validate_t_type(data['t_type'])
 
-            # 거래 종류 확인
-            if t_type != "출금" and t_type != "입금":
-                return JsonResponse({'Message': 'T_TYPE_ERROR'}, status=400)
-            # 거래 금액 확인
-            if withdraw_amount <= 0:
-                return JsonResponse({'Message': 'AMOUNT_ERROR'}, status=400)
-            # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
             ex_account = check_auth(authenticated_user, account_number)
-            if ex_account == False:  # 계좌 권한 확인
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
-
-            data = trade(
-                ex_account, withdraw_amount, description, t_type)
-            if data == False:  # 거래 가능 확인 및 거래 실시
-                return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
+            data = trade(ex_account, withdraw_amount, description, t_type)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
+        except ValidationError as detail:
+            return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
+        except AccountAuthError:
+            return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
+        except BalanceError:
+            return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
         except ValueError:
-            return JsonResponse({'Message': 'AMOUNT ERROR'}, status=400)
+            return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
 
 
 class ListView(View):
@@ -119,6 +116,8 @@ class ListView(View):
             }for transaction in transaction_list]
             return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
 
+        except JSONDecodeError:
+            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'VALUE ERROR'}, status=400)
         except KeyError:
