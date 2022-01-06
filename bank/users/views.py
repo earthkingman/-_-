@@ -16,7 +16,8 @@ class SignupView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            hash_password = bcrypt.hashpw(data['password'].encode(
+            password = str(data['password'])
+            hash_password = bcrypt.hashpw(password.encode(
                 'utf-8'), bcrypt.gensalt()).decode('utf-8')
             if User.objects.filter(email=data['email']).exists():
                 return JsonResponse({'Message': 'USER_ALREADY_EXISTS'}, status=401)
