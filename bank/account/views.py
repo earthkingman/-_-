@@ -25,7 +25,7 @@ class AccountView(View):
 
             if Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
-            user = User.objects.get(id=user_id)
+            user = User.objects.get(pk=user_id)
             account = Account.objects.create(
                 user=user,
                 account_number=account_number,
@@ -35,6 +35,10 @@ class AccountView(View):
                 data = trade(account, deposit_amount, "계좌생성", "입금")
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
+        except Account.DoesNotExist:
+            return JsonResponse({'Message': 'UNIQUE_ERROR'}, status=400)
+        except Account.MultipleObjectsReturned:
+            return JsonResponse({'Message': 'UNIQUE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
         except KeyError:

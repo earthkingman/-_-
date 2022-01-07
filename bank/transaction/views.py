@@ -17,7 +17,6 @@ class DepositView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            print(data)
             user_id = request.session['userId']
             account_number = validate_account_number(data['account_number'])
             deposit_amount = validate_amount(data['amount'])
@@ -93,8 +92,6 @@ class ListView(View):
             end_date = validate_end_date(request.GET.get("end_at", None))
             OFFSET = int(request.GET.get("offset", "0"))
             LIMIT = int(request.GET.get("limit", "10"))
-
-            print(started_date, end_date)
             # 해당계좌의 소유주가 맞는지 확인
             ex_account = check_auth(user_id, account_number)
             filters = self.transaction_list_filter(

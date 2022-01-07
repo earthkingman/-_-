@@ -40,11 +40,9 @@ class LoginView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            if not User.objects.filter(email=data['email']).exists():
+            user = User.objects.filter(email=data['email'])
+            if not user.exists():
                 return JsonResponse({'Message': 'USER_DOES_NOT_EXIST'}, status=401)
-
-            user = User.objects.get(email=data['email'])
-            userList = User.objects.filter(email=data['email'])
 
             if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
                 request.session['userId'] = user.id

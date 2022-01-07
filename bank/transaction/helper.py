@@ -39,12 +39,11 @@ def create_transaction(amount, description, ex_account, t_type):
 
 
 def check_auth(user_id, account_number):
-    try:
-        ex_account = Account.objects.get(
-            account_number=account_number, user_id=user_id)
-        return ex_account
-    except Account.DoesNotExist:
+    ex_account = Account.objects.filter(
+        account_number=account_number, user_id=user_id)
+    if not ex_account.exists():
         raise AccountAuthError
+    return ex_account
 
 
 @transaction.atomic
@@ -56,7 +55,7 @@ def trade(ex_account, amount, description, t_type):
     transaction_history = create_transaction(
         abs(amount), description, ex_account, t_type)  # 거래 내역 생성
 
-    if transaction_history.balance is not ex_account.balance:
+    if transaction_history.balance is not ex_account.balance:  # 잔액 비교
         raise BalanceConsistencyException
     data = {
         "거래 계좌": transaction_history.account.account_number,
