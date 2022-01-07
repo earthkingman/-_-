@@ -97,9 +97,6 @@ class ListView(View):
             print(started_date, end_date)
             # 해당계좌의 소유주가 맞는지 확인
             ex_account = check_auth(user_id, account_number)
-            if ex_account == None:
-                return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
-
             filters = self.transaction_list_filter(
                 ex_account, started_date, end_date, t_type)
 
