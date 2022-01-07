@@ -28,7 +28,7 @@ def validate_t_type(t_type: str):
 
 def validate_amount(amount: int):
     try:
-        amount = int(amount)
+        amount = int(amount)  # 백억 천억~
     except (TypeError, ValueError):
         msg = "정수를 넣어주세요"
         raise ValidationError(msg)

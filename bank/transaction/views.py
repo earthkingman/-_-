@@ -10,6 +10,7 @@ from transaction.helper import update_account, create_transaction, check_auth, t
 from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
 # from users.utils import login_decorator
 from django.core.exceptions import ValidationError
+from transaction.constant import DEPOSIT, WITHDRAW
 
 
 class DepositView(View):
@@ -21,15 +22,23 @@ class DepositView(View):
             account_number = validate_account_number(data['account_number'])
             deposit_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
-            t_type = validate_t_type(data['t_type'])
 
+            # 계좌 존재 확인
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(user_id, account_number)
+            ex_account = check_auth(user_id, account_number)  # 권한 확인
 
-            data = trade(ex_account, deposit_amount, description, t_type)
-
+            transaction_history = trade(ex_account, deposit_amount,
+                                        description, DEPOSIT)  # 입금 실행
+            data = {  # 밖에 빼서 작업하기
+                "거래 계좌": transaction_history.account.account_number,
+                "거래 금액": transaction_history.amount,
+                "거래 후 금액": transaction_history.balance,
+                "거래 종류": transaction_history.t_type,
+                "거래 날짜": transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "적요": description
+            }
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
         except ValidationError as detail:
@@ -49,20 +58,27 @@ class WithdrawView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            user_id = request.session['userId']
             account_number = validate_account_number(data['account_number'])
             withdraw_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
-            t_type = validate_t_type(data['t_type'])
 
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
             ex_account = check_auth(user_id, account_number)
-            if ex_account.balance - withdraw_amount < 0:
+            if ex_account.balance < withdraw_amount:  # 거래 확인
                 raise BalanceError
-            data = trade(ex_account, withdraw_amount, description, t_type)
 
+            transaction_history = trade(ex_account, deposit_amount,
+                                        description, WITHDRAW)  # 입금 실행
+            data = {  # 밖에 빼서 작업하기
+                "거래 계좌": transaction_history.account.account_number,
+                "거래 금액": transaction_history.amount,
+                "거래 후 금액": transaction_history.balance,
+                "거래 종류": transaction_history.t_type,
+                "거래 날짜": transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+                "적요": description
+            }
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
         except ValidationError as detail:
@@ -109,15 +125,21 @@ class ListView(View):
                 '거래 종류': transaction.t_type,
                 '거래 일시': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }for transaction in transaction_list]
+
             return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
+
         except AccountAuthError:
             return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
+
         except ValidationError as detail:
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
+
         except JSONDecodeError:
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
+
         except ValueError:
             return JsonResponse({'Message': 'VALUE ERROR'}, status=400)
+
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 

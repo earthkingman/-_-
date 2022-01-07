@@ -1,0 +1,2 @@
+DEPOSIT = 1
+WITHDRAW = 2
