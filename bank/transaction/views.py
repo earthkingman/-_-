@@ -1,6 +1,5 @@
 import json
 import bcrypt
-from datetime import datetime, timedelta
 from django.http import JsonResponse
 from json.decoder import JSONDecodeError
 from django.views import View
@@ -8,19 +7,19 @@ from users.models import User
 from account.models import Account
 from transaction.models import Transaction
 from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError, TransactionTypeError
-from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type
-from users.utils import login_decorator
+from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
+# from users.utils import login_decorator
 from django.core.exceptions import ValidationError
 
 
 class DepositView(View):
-    @login_decorator
+    # @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
-            authenticated_user = request.user
-            account_number = validate_account_number(
-                data['account_number'])
+            print(data)
+            user_id = request.session['userId']
+            account_number = validate_account_number(data['account_number'])
             deposit_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
             t_type = validate_t_type(data['t_type'])
@@ -28,7 +27,7 @@ class DepositView(View):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(authenticated_user, account_number)
+            ex_account = check_auth(user_id, account_number)
 
             data = trade(ex_account, deposit_amount, description, t_type)
 
@@ -38,8 +37,6 @@ class DepositView(View):
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
         except AccountAuthError:
             return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
-        except BalanceError:
-            return JsonResponse({'Message': 'BALANCE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
         except KeyError:
@@ -49,11 +46,11 @@ class DepositView(View):
 
 
 class WithdrawView(View):
-    @login_decorator
+    # @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
-            authenticated_user = request.user
+            user_id = request.session['userId']
             account_number = validate_account_number(data['account_number'])
             withdraw_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
@@ -62,7 +59,9 @@ class WithdrawView(View):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(authenticated_user, account_number)
+            ex_account = check_auth(user_id, account_number)
+            if ex_account.balance - withdraw_amount < 0:
+                raise BalanceError
             data = trade(ex_account, withdraw_amount, description, t_type)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
@@ -82,25 +81,27 @@ class WithdrawView(View):
 
 
 class ListView(View):
-    @login_decorator  # 해당 계좌, 페이지
+    # @login_decorator  # 해당 계좌, 페이지
     def get(self, request):
         try:
-            user = request.user
-            account_number = request.GET.get("account_number", None)
-            t_type = request.GET.get("t_type", None)
-            started_at = request.GET.get("started_at", None)
-            end_at = request.GET.get("end_at", None)
+            user_id = request.session['userId']
+            account_number = validate_account_number(
+                request.GET.get("account_number", None))
+            t_type = validate_list_t_type(request.GET.get("t_type", None))
+            started_date = validate_start_date(
+                request.GET.get("started_at", None))
+            end_date = validate_end_date(request.GET.get("end_at", None))
             OFFSET = int(request.GET.get("offset", "0"))
             LIMIT = int(request.GET.get("limit", "10"))
 
+            print(started_date, end_date)
             # 해당계좌의 소유주가 맞는지 확인
-            ex_account = Account.objects.get(
-                account_number=account_number, user_id=user.id)
+            ex_account = check_auth(user_id, account_number)
             if ex_account == None:
                 return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
 
             filters = self.transaction_list_filter(
-                ex_account, started_at, end_at, t_type)
+                ex_account, started_date, end_date, t_type)
 
             list_count = Transaction.objects.filter(**filters).count()
             transaction_list = Transaction.objects.filter(
@@ -115,7 +116,10 @@ class ListView(View):
                 '거래 일시': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
             }for transaction in transaction_list]
             return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
-
+        except AccountAuthError:
+            return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
+        except ValidationError as detail:
+            return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
         except JSONDecodeError:
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
         except ValueError:
@@ -123,7 +127,7 @@ class ListView(View):
         except KeyError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
 
-    def transaction_list_filter(self, account, started_at, end_at, t_type):
+    def transaction_list_filter(self, account, start_date, end_date, t_type):
         filters = {'account': account}
 
         if t_type == "출금":
@@ -131,10 +135,7 @@ class ListView(View):
         elif t_type == "입금":
             filters['t_type'] = "입금"
 
-        if started_at and end_at:
-            start_date = datetime.strptime(started_at, '%Y-%m-%d')
-            end_date = datetime.strptime(end_at, '%Y-%m-%d')
-            end_date = end_date + timedelta(days=1)
+        if start_date and end_date:
             filters['created_at__gte'] = start_date
             filters['created_at__lt'] = end_date
 

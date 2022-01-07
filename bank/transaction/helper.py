@@ -23,8 +23,6 @@ def update_account(amount, ex_account, t_type):
         ex_account.balance = ex_account.balance - amount
     else:
         raise TransactionTypeError
-    if ex_account.balance < 0:
-        raise BalanceError
     ex_account.save()
     return ex_account
 
@@ -40,10 +38,10 @@ def create_transaction(amount, description, ex_account, t_type):
     return transaction_history
 
 
-def check_auth(authenticated_user, account_number):
+def check_auth(user_id, account_number):
     try:
         ex_account = Account.objects.get(
-            account_number=account_number, user=authenticated_user)
+            account_number=account_number, user_id=user_id)
         return ex_account
     except Account.DoesNotExist:
         raise AccountAuthError

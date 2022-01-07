@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-
+from datetime import datetime, timedelta
 
 # def validate_amount(value):
 #     if (value <= 0):
@@ -41,8 +41,8 @@ def validate_amount(amount: int):
 def validate_description(description: str):
     try:
         description = str(description)
-        msg = "적요를 제대로 적어주세요"
     except (TypeError, ValueError):
+        msg = "적요를 제대로 적어주세요"
         raise ValidationError(msg)
     return description
 
@@ -50,7 +50,37 @@ def validate_description(description: str):
 def validate_account_number(account_number: str):
     try:
         account_number = str(account_number)
-        msg = "계좌번호를 제대로 적어주세요"
     except (TypeError, ValueError):
+        msg = "계좌번호를 제대로 적어주세요"
         raise ValidationError(msg)
     return account_number
+
+
+def validate_start_date(start_at: str):
+    try:
+        if start_at is None:
+            return None
+        start_date = datetime.strptime(start_at, '%Y-%m-%d')
+        return start_date
+    except (TypeError, ValueError):
+        msg = "날짜 형식이 아닙니다."
+        raise ValidationError(msg)
+
+
+def validate_end_date(end_at: str):
+    try:
+        if end_at is None:
+            return None
+        end_date = datetime.strptime(end_at, '%Y-%m-%d')
+        end_date = end_date + timedelta(days=1)
+        return end_date
+    except (TypeError, ValueError):
+        msg = "날짜 형식이 아닙니다."
+        raise ValidationError(msg)
+
+
+def validate_list_t_type(t_type: str):
+    if (t_type != "출금" and t_type != "입금" and t_type is not None):
+        msg = "거래는 출금과 입금, 기본만 가능합니다."
+        raise ValidationError(msg)
+    return t_type
