@@ -8,17 +8,17 @@ from account.models import Account
 from transaction.models import Transaction
 from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError, TransactionTypeError
 from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
-# from users.utils import login_decorator
+from users.utils import login_decorator
 from django.core.exceptions import ValidationError
 from transaction.constant import DEPOSIT, WITHDRAW
 
 
 class DepositView(View):
-    # @login_decorator
+    @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
-            user_id = request.session['userId']
+            user = request.user
             account_number = validate_account_number(data['account_number'])
             deposit_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
@@ -27,7 +27,7 @@ class DepositView(View):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(user_id, account_number)  # 권한 확인
+            ex_account = check_auth(user, account_number)  # 권한 확인
 
             transaction_history = trade(ex_account, deposit_amount,
                                         description, DEPOSIT)  # 입금 실행
@@ -54,18 +54,18 @@ class DepositView(View):
 
 
 class WithdrawView(View):
-    # @login_decorator
+    @login_decorator
     def post(self, request):
         try:
             data = json.loads(request.body)
             account_number = validate_account_number(data['account_number'])
             withdraw_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
-
+            user = request.user
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(user_id, account_number)
+            ex_account = check_auth(user, account_number)
             if ex_account.balance < withdraw_amount:  # 거래 확인
                 raise BalanceError
 
@@ -96,10 +96,10 @@ class WithdrawView(View):
 
 
 class ListView(View):
-    # @login_decorator  # 해당 계좌, 페이지
+    @login_decorator  # 해당 계좌, 페이지
     def get(self, request):
         try:
-            user_id = request.session['userId']
+            user = request.user
             account_number = validate_account_number(
                 request.GET.get("account_number", None))
             t_type = validate_list_t_type(request.GET.get("t_type", None))
@@ -109,7 +109,7 @@ class ListView(View):
             OFFSET = int(request.GET.get("offset", "0"))
             LIMIT = int(request.GET.get("limit", "10"))
             # 해당계좌의 소유주가 맞는지 확인
-            ex_account = check_auth(user_id, account_number)
+            ex_account = check_auth(user, account_number)
             filters = self.transaction_list_filter(
                 ex_account, started_date, end_date, t_type)
 

@@ -1,2 +1,3 @@
 DEPOSIT = 1
 WITHDRAW = 2
+DESCRIPTION = "계좌 개설 금액"

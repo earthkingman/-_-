@@ -8,6 +8,7 @@ from json.decoder import JSONDecodeError
 from django.http import JsonResponse
 from users.models import User
 from django.shortcuts import render
+from users.utils import accessSign, accessVerify
 import my_settings
 SECRET_KEY = my_settings.SECRET
 # Create your views here.
@@ -43,20 +44,39 @@ class LoginView(View):
             if not User.objects.filter(email=data['email']).exists():
                 return JsonResponse({'Message': 'USER_DOES_NOT_EXIST'}, status=401)
 
-            user = User.objects.get(email=data['email'])
-            # userList = User.objects.filter(email=data['email'])
-
-            if bcrypt.checkpw(data['password'].encode('utf-8'), user.password.encode('utf-8')):
-                request.session['userId'] = user.id
-                # access_token = jwt.encode({'id': user.id, "exp": datetime.utcnow(
-                # ) + timedelta(minutes=900000000)}, SECRET_KEY, algorithm="HS256")
-
-                return JsonResponse({'TOKEN': access_token}, status=200)
+            user = User.objects.filter(email=data['email'])
+            if bcrypt.checkpw(data['password'].encode('utf-8'), user[0].password.encode('utf-8')):  # 원리 파악하기
+                access_token = accessSign(user)
+                return JsonResponse({'ACCESS_TOKEN': access_token}, status=200)
 
             return JsonResponse({'Message': 'INVALID_PASSWORD'}, status=401)
+
         except JSONDecodeError:
             return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
         except ValueError:
             return JsonResponse({'Message': 'ERROR'}, status=400)
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
+
+
+# class RefreshView(View):
+#     def post(self, request):
+#         try:
+#             access_token = request.headers.get('Authorization', None)
+#             refresh_token = request.headers.get('Refresh', None)
+
+#             if (access_token and refresh_token):  # access_token refresh_token 둘 다 존재하는 경우
+#                 auth_result = accessVerify(access_token)
+#                 except:
+#             if
+#             else:
+#                 return JsonResponse({'Message': 'ACCESS_TOKEN_AND_REFRESH_TOKEN_EXPIRED'}, status=400)
+
+#         except InvalidAccessTokenError:
+#             return JsonResponse({'Message': 'INVALID_TOKEN_ERROR'}, status=400)
+#         except JSONDecodeError:
+#             return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
+#         except ValueError:
+#             return JsonResponse({'Message': 'ERROR'}, status=400)
+#         except KeyError:
+#             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)

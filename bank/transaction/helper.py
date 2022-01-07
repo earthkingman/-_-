@@ -22,9 +22,6 @@ def update_account(amount: int, ex_account: User, t_type: int):
         ex_account.balance = ex_account.balance + amount
     elif (t_type == WITHDRAW):
         ex_account.balance = ex_account.balance - amount
-    else:
-        raise TransactionTypeError
-
     ex_account.save()
 
     return ex_account
@@ -45,9 +42,9 @@ def create_transaction(amount, description, ex_account, t_type):
     return transaction_history
 
 
-def check_auth(user_id, account_number):
+def check_auth(user, account_number):
     ex_account = Account.objects.filter(
-        account_number=account_number, user_id=user_id)
+        account_number=account_number, user=user)
 
     if not ex_account.exists():
         raise AccountAuthError
