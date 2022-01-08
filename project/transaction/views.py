@@ -6,11 +6,12 @@ from django.views import View
 from users.models import User
 from account.models import Account
 from transaction.models import Transaction
-from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError
+# from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError
 from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
 from users.utils import login_decorator
 from django.core.exceptions import ValidationError
 from transaction.constant import DEPOSIT, WITHDRAW
+from transaction.service import TransactionService, ExitsError, AccountAuthError, BalanceError
 
 
 class DepositView(View):
@@ -21,6 +22,7 @@ class DepositView(View):
     '''
     @login_decorator
     def post(self, request):
+        transcation: TransactionService = TransactionService()
         try:
             # 데이터 검증
             data = json.loads(request.body)
@@ -29,15 +31,11 @@ class DepositView(View):
             deposit_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
 
-            # 계좌 존재 확인
-            if not Account.objects.filter(account_number=account_number).exists():
-                return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-
-            # 권한 확인
-            account = check_auth(user, account_number)
+            # 계좌 존재 및 권한 존재 확인
+            account = transcation.check_auth(user, account_number)
 
             # 입금 실행
-            transaction_result = trade(
+            transaction_result = transcation.trade(
                 account, deposit_amount, description, DEPOSIT)
 
             # 응답 데이터 생성
@@ -45,6 +43,8 @@ class DepositView(View):
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
+        except ExitsError:
+            return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
         except ValidationError as detail:  # 검증 에러
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
         except AccountAuthError:  # 권한 에러
@@ -64,6 +64,7 @@ class WithdrawView(View):
     '''
     @login_decorator
     def post(self, request):
+        transcation: TransactionService = TransactionService()
         try:
             data = json.loads(request.body)
             account_number = validate_account_number(data['account_number'])
@@ -71,24 +72,23 @@ class WithdrawView(View):
             description = validate_description(data['description'])
             user = request.user
 
-            # 계좌 존재 확인
-            if not Account.objects.filter(account_number=account_number).exists():
-                return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-
-            # 거래 권한 확인
-            account = check_auth(user, account_number)
+            # 계좌 존재 및 권한 확인
+            account = transcation.check_auth(user, account_number)
 
             # 거래 가능 확인
             if account.balance < withdraw_amount:
                 raise BalanceError
 
             # 출금 실행
-            transaction_result = trade(
+            transaction_result = transcation.trade(
                 account, withdraw_amount, description, WITHDRAW)
 
             # 응답 데이터 생성
             data = obj_to_data(transaction_result)
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+
+        except ExitsError:
+            return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
         # 값이 안들어오는 경우
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
@@ -114,6 +114,7 @@ class ListView(View):
     '''
     @login_decorator  # 해당 계좌, 페이지
     def get(self, request):
+        trasaction_service: TransactionService = TransactionService()
         try:
             user = request.user
             account_number = validate_account_number(
@@ -126,12 +127,8 @@ class ListView(View):
             offset = int(request.GET.get("offset", 0))
             limit = int(request.GET.get("limit", 10))
 
-            # 해당 계좌가 존재하는지 확인
-            if not Account.objects.filter(account_number=account_number).exists():
-                return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-
-            # 해당 계좌의 소유주가 맞는지 확인
-            account = check_auth(user, account_number)
+            # 해당 계좌의 존재하는지 소유주가 맞는지 확인
+            account = trasaction_service.check_auth(user, account_number)
 
             # 필터링
             filters = self.transaction_list_filter(
@@ -148,6 +145,9 @@ class ListView(View):
             results = self.obj_to_list(transaction_list, account)
             return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
 
+        # 계좌 존재하지 않는 경우
+        except ExitsError:
+            return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
         # 계좌 권한 없는 경우
         except AccountAuthError:
             return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)

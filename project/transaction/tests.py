@@ -2,12 +2,12 @@ from django.test import TestCase, Client
 import bcrypt
 import jwt
 import json
-# from unittest.mock import MagicMock, patch
+
 from datetime import datetime
 from users.models import User
 from account.models import Account
 from importlib import import_module
-from transaction.helper import trade
+from transaction.service import TransactionService
 from .constant import WITHDRAW, DEPOSIT
 import my_settings
 from django.conf import settings as django_settings
@@ -18,7 +18,7 @@ class TransactionViewTest(TestCase):
     client = Client()
 
     def setUp(self):
-
+        trasaction_service: TransactionService = TransactionService()
         global headers1, headers2, deal1, deal2, deal3, deal4
         user1 = User.objects.create(email="test1@8Percent.com", password=bcrypt.hashpw(
             "1234".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
@@ -38,10 +38,10 @@ class TransactionViewTest(TestCase):
         account2 = Account.objects.create(
             user=user2, account_number="계좌2", balance=1000)
 
-        deal1 = trade(account1, 100, "비트코인 매도", DEPOSIT)
-        deal2 = trade(account1, 100, "비트코인 매수", WITHDRAW)
-        deal3 = trade(account1, 100, "비트코인 매도", DEPOSIT)
-        deal4 = trade(account1, 100, "비트코인 매수", WITHDRAW)
+        deal1 = trasaction_service.trade(account1, 100, "비트코인 매도", DEPOSIT)
+        deal2 = trasaction_service.trade(account1, 100, "비트코인 매수", WITHDRAW)
+        deal3 = trasaction_service.trade(account1, 100, "비트코인 매도", DEPOSIT)
+        deal4 = trasaction_service.trade(account1, 100, "비트코인 매수", WITHDRAW)
 
         # account1.balance = account1.balance + 1000
         # deal1 = Transaction.objects.create(account = account1, amount = 1000, balance = account1.balance, transaction_type = "입금", description = "비트코인 매도")

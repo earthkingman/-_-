@@ -7,7 +7,7 @@ from datetime import datetime
 from users.models import User
 from account.models import Account
 from importlib import import_module
-from transaction.helper import trade
+from transaction.service import TransactionService
 from transaction.constant import WITHDRAW, DEPOSIT
 import my_settings
 from django.conf import settings as django_settings
@@ -18,7 +18,7 @@ class AccountViewTest(TestCase):
     client = Client()
 
     def setUp(self):
-
+        trasaction_service: TransactionService = TransactionService()
         global headers1, headers2, deal1, deal2, deal3, deal4
         user1 = User.objects.create(email="test1@8Percent.com", password=bcrypt.hashpw(
             "1234".encode('utf-8'), bcrypt.gensalt()).decode('utf-8'))
