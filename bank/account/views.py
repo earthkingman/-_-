@@ -45,21 +45,17 @@ class AccountView(View):
     @login_decorator
     def get(self, request):
         try:
-            data = json.loads(request.body)
             user = request.user
 
-            account_number = validate_account_number(data['account_number'])
-
+            account_number = validate_account_number(
+                request.GET.get("account_number", None))
             account = Account.objects.filter(account_number=account_number)
-            if account.exists():
-                return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
-
             data = {
                 "계좌 번호": account[0].account_number,
-                "소유주 ": account[0].user,
+                "소유주 ": account[0].user.email,
                 "잔액": account[0].balance,
             }
-            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=200)
 
         except ValueError:
             return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
