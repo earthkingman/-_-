@@ -6,7 +6,7 @@ from django.views import View
 from users.models import User
 from account.models import Account
 from transaction.models import Transaction
-from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError, TransactionTypeError
+from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError
 from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
 from users.utils import login_decorator
 from django.core.exceptions import ValidationError
@@ -19,7 +19,8 @@ class DepositView(View):
         try:
             data = json.loads(request.body)
             user = request.user
-            account_number = validate_account_number(data['account_number'])
+            account_number = validate_account_number(
+                data['account_number'])  # 데이터 검증
             deposit_amount = validate_amount(data['amount'])
             description = validate_description(data['description'])
 
@@ -27,11 +28,11 @@ class DepositView(View):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(user, account_number)  # 권한 확인
+            account = check_auth(user, account_number)  # 권한 확인
 
-            transaction_history = trade(ex_account, deposit_amount,
+            transaction_history = trade(account, deposit_amount,
                                         description, DEPOSIT)  # 입금 실행
-            data = {  # 밖에 빼서 작업하기
+            data = {
                 "거래 계좌": transaction_history.account.account_number,
                 "거래 금액": transaction_history.amount,
                 "거래 후 금액": transaction_history.balance,
@@ -41,7 +42,7 @@ class DepositView(View):
             }
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
-        except ValidationError as detail:
+        except ValidationError as detail:  # 검증 에러
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
         except AccountAuthError:
             return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
@@ -65,13 +66,15 @@ class WithdrawView(View):
             if not Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
-            ex_account = check_auth(user, account_number)
-            if ex_account.balance < withdraw_amount:  # 거래 확인
+            account = check_auth(user, account_number)
+            if account.balance < withdraw_amount:  # 거래 확인
                 raise BalanceError
 
-            transaction_history = trade(ex_account, deposit_amount,
-                                        description, WITHDRAW)  # 입금 실행
-            data = {  # 밖에 빼서 작업하기
+            # 출금 실행
+            transaction_history = trade(
+                account, withdraw_amount, description, WITHDRAW)
+
+            data = {
                 "거래 계좌": transaction_history.account.account_number,
                 "거래 금액": transaction_history.amount,
                 "거래 후 금액": transaction_history.balance,
@@ -109,16 +112,16 @@ class ListView(View):
             OFFSET = int(request.GET.get("offset", "0"))
             LIMIT = int(request.GET.get("limit", "10"))
             # 해당계좌의 소유주가 맞는지 확인
-            ex_account = check_auth(user, account_number)
+            account = check_auth(user, account_number)
             filters = self.transaction_list_filter(
-                ex_account, started_date, end_date, t_type)
+                account, started_date, end_date, t_type)
 
             list_count = Transaction.objects.filter(**filters).count()
             transaction_list = Transaction.objects.filter(
                 **filters).order_by("id")[OFFSET:LIMIT]
 
             results = [{
-                '계좌 번호': ex_account.account_number,
+                '계좌 번호': account.account_number,
                 '거래 후 잔액': transaction.balance,
                 '금액': transaction.amount,
                 '적요': transaction.description,
@@ -135,7 +138,7 @@ class ListView(View):
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
 
         except JSONDecodeError:
-            return JsonResponse({'message': 'JSON_DECODE_ERROR'}, status=400)
+            return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
 
         except ValueError:
             return JsonResponse({'Message': 'VALUE ERROR'}, status=400)

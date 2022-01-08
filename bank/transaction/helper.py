@@ -5,62 +5,64 @@ from django.db import transaction
 from transaction.constant import DEPOSIT, WITHDRAW
 
 
-class AccountAuthError(Exception):
+class AccountAuthError(Exception):  # 계좌 권한
     pass
 
 
-class TransactionTypeError(Exception):
+class BalanceError(Exception):  # 잔액 부족
     pass
 
 
-class BalanceError(Exception):
-    pass
-
-
-def update_account(amount: int, ex_account: User, t_type: int):
+# 계좌 잔액 수정
+def update_account(amount: int, account: User, t_type: int):
     if (t_type == DEPOSIT):
-        ex_account.balance = ex_account.balance + amount
+        account.balance = account.balance + amount
     elif (t_type == WITHDRAW):
-        ex_account.balance = ex_account.balance - amount
-    ex_account.save()
+        account.balance = account.balance - amount
+    account.save()
 
-    return ex_account
+    return account
 
 
-def create_transaction(amount, description, ex_account, t_type):
+# 거래 내역 생성
+def create_transaction(amount, description, account, t_type):
     if t_type is DEPOSIT:
-        t_type = "출금"
-    elif t_type is WITHDRAW:
         t_type = "입금"
+    elif t_type is WITHDRAW:
+        t_type = "출금"
     transaction_history = Transaction.objects.create(
-        account=ex_account,
+        account=account,
         amount=amount,
-        balance=ex_account.balance,
+        balance=account.balance,
         t_type=t_type,
         description=description
     )
     return transaction_history
 
+# 권한 확인
+
 
 def check_auth(user, account_number):
-    ex_account = Account.objects.filter(
+    account = Account.objects.filter(
         account_number=account_number, user=user)
 
-    if not ex_account.exists():
+    if not account.exists():
         raise AccountAuthError
 
-    return ex_account[0]
+    return account[0]
+
+# 거래실행 (트랜잭션)
 
 
 @transaction.atomic
-def trade(ex_account, amount, description, t_type):
+def trade(account, amount, description, t_type):
     amount_after_transaction = update_account(
-        amount, ex_account, t_type)  # 해당 계좌 잔액 수정
+        amount, account, t_type)  # 해당 계좌 잔액 수정
 
     transaction_history = create_transaction(
-        abs(amount), description, ex_account, t_type)  # 거래 내역 생성
+        abs(amount), description, account, t_type)  # 거래 내역 생성
 
-    if transaction_history.balance is not ex_account.balance:  # 잔액 비교
+    if transaction_history.balance is not account.balance:  # 잔액 비교
         raise BalanceConsistencyException
 
     return transaction_history

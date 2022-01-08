@@ -86,7 +86,6 @@ class DealViewTest(TestCase):
             "account_number": "존재하지 않는 계좌",
             "amount": 100,
             "description": "월급",
-            "t_type": "입금"
         }
         current_time = datetime.now()
         response = client.post('/transaction/deposit', json.dumps(deal_info),
@@ -103,10 +102,9 @@ class DealViewTest(TestCase):
             "account_number": "계좌1",
             "amount": 1000000,
             "description": "월급",
-            "t_type": "출금"
         }
         current_time = datetime.now()
-        response = client.post('/transaction/deposit', json.dumps(deal_info),
+        response = client.post('/transaction/withdraw', json.dumps(deal_info),
                                content_type='application/json', **headers1)
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"Message": "BALANCE_ERROR"})
