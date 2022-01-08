@@ -14,10 +14,10 @@ class BalanceError(Exception):  # 잔액 부족
 
 
 # 계좌 잔액 수정
-def update_account(amount: int, account: User, t_type: int):
-    if (t_type == DEPOSIT):
+def update_account(amount: int, account: User, transaction_type: int):
+    if (transaction_type == DEPOSIT):
         account.balance = account.balance + amount
-    elif (t_type == WITHDRAW):
+    elif (transaction_type == WITHDRAW):
         account.balance = account.balance - amount
 
     account.save()
@@ -26,12 +26,12 @@ def update_account(amount: int, account: User, t_type: int):
 
 
 # 거래 내역 생성
-def create_transaction(amount, description, account, t_type):
+def create_transaction(amount, description, account, transaction_type):
     transaction_history = Transaction.objects.create(
         account=account,
         amount=amount,
         balance=account.balance,
-        t_type=t_type,
+        transaction_type=transaction_type,
         description=description
     )
     return transaction_history
@@ -49,11 +49,11 @@ def check_auth(user, account_number):
 
 
 @transaction.atomic  # 거래실행 (트랜잭션)
-def trade(account, amount, description, t_type):
+def trade(account, amount, description, transaction_type):
     amount_after_transaction = update_account(
-        amount, account, t_type)  # 해당 계좌 잔액 수정
+        amount, account, transaction_type)  # 해당 계좌 잔액 수정
 
     transaction_history = create_transaction(
-        abs(amount), description, account, t_type)  # 거래 내역 생성
+        abs(amount), description, account, transaction_type)  # 거래 내역 생성
 
     return transaction_history
