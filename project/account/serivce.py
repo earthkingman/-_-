@@ -1,17 +1,11 @@
 from account.models import Account
+from users.models import User
 
 
 class AccountService:
 
-    def create_account(self, user, account_number):
-        """계좌를 생성하는 함수입니다.
-
-        Args:
-            user (User): 사용자
-            account_number (str): 계좌 번호
-        Return:
-            Account (Account): 계좌
-        """
+    # 계좌를 생성하는 함수
+    def create_account(self, user: User, account_number: str):
         account = Account.objects.create(
             user=user,
             account_number=account_number,
@@ -19,17 +13,10 @@ class AccountService:
         )
         return account
 
-    def select_account(self, account_number):
-        """계좌를 조회하는 함수입니다.
-
-        Args:
-            account_number (str): 계좌 번호
-        Return:
-            data (dict): 계좌 정보
-        """
+    # 계좌를 조회하는 함수
+    def select_account(self, account_number: str) -> dict:
         account = Account.objects.filter(account_number=account_number)
 
-        # 응답 값 생성
         data = {
             "계좌 번호": account[0].account_number,
             "소유주 ": account[0].user.email,

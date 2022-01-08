@@ -6,34 +6,35 @@ from account.models import Account
 from users.models import User
 from json.decoder import JSONDecodeError
 from transaction.validators import validate_amount, validate_account_number
-from transaction.constant import DEPOSIT, DESCRIPTION
+from transaction.constant import DESCRIPTION
 from account.serivce import AccountService
 from transaction.service import TransactionService
 
 
 class AccountView(View):
     @login_decorator
-    def post(self, request):
+    def post(self, request) -> JsonResponse:
         account_service: AccountService = AccountService()
         transaction_service: TransactionService = TransactionService()
         try:
             data = json.loads(request.body)
-            user = request.user
+            user: User = request.user
 
             # 데이터 검증
-            deposit_amount = validate_amount(data['amount'])
-            account_number = validate_account_number(data['account_number'])
+            deposit_amount: int = validate_amount(data['amount'])
+            account_number: str = validate_account_number(
+                data['account_number'])
 
             # 계좌 존재 확인
             if Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
 
             # 계좌 생성
-            account = account_service.create_account(user, account_number)
+            account: Account = account_service.create_account(
+                user, account_number)
 
             # 기본 금액 입금
-            data = transaction_service.trade(
-                account, deposit_amount, DESCRIPTION, DEPOSIT)
+            transaction_service.deposit(account, deposit_amount, DESCRIPTION)
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
         except ValueError:
@@ -44,16 +45,16 @@ class AccountView(View):
             return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
 
     @login_decorator
-    def get(self, request):
+    def get(self, request) -> JsonResponse:
         account_service: AccountService = AccountService()
         try:
             # 데이터 검증
-            user = request.user
-            account_number = validate_account_number(
+            user: User = request.user
+            account_number: str = validate_account_number(
                 request.GET.get("account_number", None))
 
             # 계좌 존재 확인
-            data = account_service.select_account(
+            data: dict = account_service.select_account(
                 account_number=account_number)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=200)

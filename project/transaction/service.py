@@ -18,19 +18,9 @@ class BalanceError(Exception):  # 잔액 부족
 
 
 class TransactionService:
-    # 계좌 잔액 수정
-    def update_account(self, amount: int, account: User, transaction_type: int):
-        if (transaction_type == DEPOSIT):
-            account.balance = account.balance + amount
-        elif (transaction_type == WITHDRAW):
-            account.balance = account.balance - amount
-
-        account.save()
-
-        return account
 
     # 거래 내역 생성
-    def create_transaction(self, amount, description, account, transaction_type):
+    def create_transaction(self, amount: int, description: str, account: Account, transaction_type: str):
         transaction_history = Transaction.objects.create(
             account=account,
             amount=amount,
@@ -53,13 +43,26 @@ class TransactionService:
 
         return account[0]
 
-    # 거래실행 (트랜잭션)
+    # 입금 (트랜잭션)
     @transaction.atomic
-    def trade(self, account, amount, description, transaction_type):
-        amount_after_transaction = self.update_account(
-            amount, account, transaction_type)  # 해당 계좌 잔액 수정
-
+    def deposit(self, account, amount, description):
+        # 계좌 잔액 수정
+        account.balance = account.balance + amount
+        account.save()
+        # 거래 내역 생성
         transaction_history = self.create_transaction(
-            abs(amount), description, account, transaction_type)  # 거래 내역 생성
+            amount, description, account, DEPOSIT)
+
+        return transaction_history
+
+    # 출금 (트랜잭션)
+    @transaction.atomic
+    def withdraw(self, account, amount, description):
+        # 계좌 잔액 수정
+        account.balance = account.balance - amount
+        account.save()
+        # 거래 내역 생성
+        transaction_history = self.create_transaction(
+            amount, description, account, WITHDRAW)  # 거래 내역 생성
 
         return transaction_history

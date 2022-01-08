@@ -26,20 +26,21 @@ class DepositView(View):
         try:
             # 데이터 검증
             data = json.loads(request.body)
-            user = request.user
-            account_number = validate_account_number(data['account_number'])
-            deposit_amount = validate_amount(data['amount'])
-            description = validate_description(data['description'])
+            user: User = request.user
+            account_number: str = validate_account_number(
+                data['account_number'])
+            deposit_amount: int = validate_amount(data['amount'])
+            description: str = validate_description(data['description'])
 
             # 계좌 존재 및 권한 존재 확인
-            account = transcation.check_auth(user, account_number)
+            account: Account = transcation.check_auth(user, account_number)
 
             # 입금 실행
-            transaction_result = transcation.trade(
-                account, deposit_amount, description, DEPOSIT)
+            transaction_result: Transaction = transcation.deposit(
+                account, deposit_amount, description)
 
             # 응답 데이터 생성
-            data = obj_to_data(transaction_result)
+            data: dict = obj_to_data(transaction_result)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
@@ -67,24 +68,25 @@ class WithdrawView(View):
         transcation: TransactionService = TransactionService()
         try:
             data = json.loads(request.body)
-            account_number = validate_account_number(data['account_number'])
-            withdraw_amount = validate_amount(data['amount'])
-            description = validate_description(data['description'])
-            user = request.user
+            account_number: str = validate_account_number(
+                data['account_number'])
+            withdraw_amount: int = validate_amount(data['amount'])
+            description: str = validate_description(data['description'])
+            user: User = request.user
 
             # 계좌 존재 및 권한 확인
-            account = transcation.check_auth(user, account_number)
+            account: Account = transcation.check_auth(user, account_number)
 
             # 거래 가능 확인
             if account.balance < withdraw_amount:
                 raise BalanceError
 
             # 출금 실행
-            transaction_result = transcation.trade(
-                account, withdraw_amount, description, WITHDRAW)
+            transaction_result: Transaction = transcation.withdraw(
+                account, withdraw_amount, description)
 
             # 응답 데이터 생성
-            data = obj_to_data(transaction_result)
+            data: dict = obj_to_data(transaction_result)
             return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
         except ExitsError:
@@ -113,7 +115,7 @@ class ListView(View):
     계좌가 존재하고 소유주가 맞는지 확인합니다.
     '''
     @login_decorator  # 해당 계좌, 페이지
-    def get(self, request):
+    def get(self, request) -> JsonResponse:
         trasaction_service: TransactionService = TransactionService()
         try:
             user = request.user
@@ -128,17 +130,18 @@ class ListView(View):
             limit = int(request.GET.get("limit", 10))
 
             # 해당 계좌의 존재하는지 소유주가 맞는지 확인
-            account = trasaction_service.check_auth(user, account_number)
+            account: Account = trasaction_service.check_auth(
+                user, account_number)
 
             # 필터링
-            filters = self.transaction_list_filter(
+            filters: dict = self.transaction_list_filter(
                 account, started_date, end_date, transaction_type)
 
             # 리스트 갯수
-            list_count = Transaction.objects.filter(**filters).count()
+            list_count: int = Transaction.objects.filter(**filters).count()
 
             # 거래 내역 조회
-            transaction_list = Transaction.objects.filter(
+            transaction_list: Transaction = Transaction.objects.filter(
                 **filters).order_by("id")[offset:limit]
 
             # 데이터 변환
@@ -156,26 +159,23 @@ class ListView(View):
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
 
     # 데이터 필터링 함수
-    def transaction_list_filter(self, account, start_date, end_date, transaction_type):
-        '''
-        필터링 조건에 맞게 딕셔너리를 생성합니다.
-        '''
-        filters = {'account': account}
+    def transaction_list_filter(self, account: Account, start_date: str, end_date: str, transaction_type: str) -> dict:
+        filters: dict = {'account': account}
 
         if transaction_type == WITHDRAW:
-            filters['transaction_type'] = WITHDRAW
+            filters['transaction_type']: dict = WITHDRAW
         elif transaction_type == DEPOSIT:
-            filters['transaction_type'] = DEPOSIT
+            filters['transaction_type']: dict = DEPOSIT
 
         if start_date and end_date:
-            filters['created_at__gte'] = start_date
-            filters['created_at__lt'] = end_date
+            filters['created_at__gte']: dict = start_date
+            filters['created_at__lt']: dict = end_date
 
         return filters
 
     # 데이터 변환
-    def obj_to_list(self, transaction_list: Transaction, account: Account):
-        results = [{
+    def obj_to_list(self, transaction_list: Transaction, account: Account) -> list:
+        results: list = [{
             '계좌 번호': account.account_number,
             '거래 후 잔액': transaction.balance,
             '금액': transaction.amount,
@@ -187,8 +187,8 @@ class ListView(View):
         return results
 
 
-def obj_to_data(transaction_history: Transaction):
-    data = {
+def obj_to_data(transaction_history: Transaction) -> dict:
+    data: dict = {
         "거래 계좌": transaction_history.account.account_number,
         "거래 금액": transaction_history.amount,
         "거래 후 금액": transaction_history.balance,
