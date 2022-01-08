@@ -109,8 +109,10 @@ class ListView(View):
             started_date = validate_start_date(
                 request.GET.get("started_at", None))
             end_date = validate_end_date(request.GET.get("end_at", None))
-            OFFSET = int(request.GET.get("offset", "0"))
-            LIMIT = int(request.GET.get("limit", "10"))
+            OFFSET = int(request.GET.get("offset", 0))
+            LIMIT = int(request.GET.get("limit", 10))
+
+            # 계좌가 존재하는지 확인하는 로직 추가
             # 해당계좌의 소유주가 맞는지 확인
             account = check_auth(user, account_number)
             filters = self.transaction_list_filter(

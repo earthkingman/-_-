@@ -21,8 +21,10 @@ class SignupView(View):
             password = str(data['password'])
             hash_password = bcrypt.hashpw(password.encode(
                 'utf-8'), bcrypt.gensalt()).decode('utf-8')
+
             if User.objects.filter(email=data['email']).exists():
                 return JsonResponse({'Message': 'USER_ALREADY_EXISTS'}, status=401)
+
             User.objects.create(
                 email=data['email'],
                 password=hash_password
@@ -41,10 +43,11 @@ class LoginView(View):
     def post(self, request):
         try:
             data = json.loads(request.body)
-            if not User.objects.filter(email=data['email']).exists():
+            user = User.objects.filter(email=data['email'])
+
+            if not user.exists():
                 return JsonResponse({'Message': 'USER_DOES_NOT_EXIST'}, status=401)
 
-            user = User.objects.filter(email=data['email'])
             if bcrypt.checkpw(data['password'].encode('utf-8'), user[0].password.encode('utf-8')):  # 원리 파악하기
                 access_token = accessSign(user)
                 return JsonResponse({'ACCESS_TOKEN': access_token}, status=200)

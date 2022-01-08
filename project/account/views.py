@@ -21,11 +21,12 @@ class AccountView(View):
             data = json.loads(request.body)
             user = request.user
 
-            deposit_amount = validate_amount(data['amount'])
+            deposit_amount = validate_amount(data['amount'])  # 예외처리
             account_number = validate_account_number(data['account_number'])
 
             if Account.objects.filter(account_number=account_number).exists():
                 return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
+
             account = Account.objects.create(
                 user=user,
                 account_number=account_number,
