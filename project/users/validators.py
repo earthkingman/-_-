@@ -3,7 +3,7 @@ from django.core.exceptions import ValidationError
 
 def validate_email(email: str) -> str:
     try:
-        if len(email) < 3 or len(email) > 20:
+        if len(email) < 3 or len(email) > 50:
             msg = "이메일 길이는 3보다 크고 20보다 작아야 합니다"
             raise ValidationError(msg)
         return email

@@ -35,9 +35,6 @@ class SignupView(View):
         except JSONDecodeError:
             return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
 
-        except ValueError:
-            return JsonResponse({'Message': 'VALUE_ERROR'}, status=400)
-
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
 

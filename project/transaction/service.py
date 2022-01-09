@@ -104,8 +104,8 @@ class TransactionService:
 
         return filters
 
-    def obj_to_data(self, transaction_history: Transaction):
-        result = {
+    def obj_to_data(self, transaction_history: Transaction) -> dict:
+        result: dict = {
             "거래 계좌": transaction_history.account.account_number,
             "거래 금액": transaction_history.amount,
             "거래 후 금액": transaction_history.balance,
@@ -116,8 +116,8 @@ class TransactionService:
         return result
 
       # 데이터 변환
-    def obj_to_list(self, transaction_list: Transaction, account: Account):
-        results = [{
+    def obj_to_list(self, transaction_list: Transaction, account: Account) -> list:
+        results: list = [{
             '계좌 번호': account.account_number,
             '거래 후 잔액': transaction.balance,
             '금액': transaction.amount,

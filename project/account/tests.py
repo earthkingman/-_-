@@ -2,7 +2,6 @@ from django.test import TestCase, Client
 import bcrypt
 import jwt
 import json
-from unittest.mock import MagicMock, patch
 from datetime import datetime
 from users.models import User
 from account.models import Account
@@ -43,7 +42,7 @@ class AccountViewTest(TestCase):
         Account.objects.all().delete()
         # Transaction.objects.all().delete()
 
-    # 계좌 생성
+    # 계좌 생성 성공
     def test_account_post_success(self):
         client = Client()
 
@@ -57,8 +56,33 @@ class AccountViewTest(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json(), {"Message": "SUCCESS"})
 
-    # 계좌 중복
+    # 계좌 생성 KEY_ERROR
+    def test_account_key_error_post_success(self):
+        client = Client()
 
+        deal_info = {
+            "amount": 100
+        }
+
+        response = client.post('/accounts/account', json.dumps(deal_info),
+                               content_type='application/json', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'Message': "KEY_ERROR", })
+
+    # 계좌 생성 JSON_DECODE_ERROR
+
+    def test_account_value_error_post_success(self):
+        client = Client()
+
+        current_time = datetime.now()
+        deal_info = current_time
+
+        response = client.post('/accounts/account', deal_info,
+                               content_type='application/json', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {'Message': "JSON_DECODE_ERROR", })
+
+    # 계좌 생성 중복
     def test_account_post_duplicate(self):
         client = Client()
 
@@ -72,14 +96,47 @@ class AccountViewTest(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json(), {"Message": "DUPLICATE_ERROR"})
 
-      # 계좌 조회
-    def test_account_get_success(self):
+      # 계좌 정보 조회 권한 없음
+    def test_account_auth_get_fail(self):
         client = Client()
 
         response = client.get(
             '/accounts/account?account_number=계좌2', **headers1)
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json(), {
+            'Message': 'AUTH_ERROR'
+        })
+
+    # 계좌 정보 조회 성공
+    def test_account_get_success(self):
+        client = Client()
+
+        response = client.get(
+            '/accounts/account?account_number=계좌1', **headers1)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {
             'Message': 'SUCCESS',
-            "Data": {'계좌 번호': '계좌2', '소유주 ': 'test2@8Percent.com', '잔액': 1000}
+            "Data": {'계좌 번호': '계좌1', '소유주 ': 'test1@8Percent.com', '잔액': 1000}
+        })
+
+        # 계좌 정보 조회 EXIST_ERROR
+    def test_account_exist_error_get_fail(self):
+        client = Client()
+
+        response = client.get(
+            '/accounts/account?account_number=계좌1234', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'Message': 'EXIST_ERROR'
+        })
+
+    # 계좌 정보 조회 VALIDATION_ERROR
+    def test_account_validation_error_get_fail(self):
+        client = Client()
+
+        response = client.get(
+            '/accounts/account?account_number=계좌1234556456456464564564564646465645645646', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'Message': "VALIDATION_ERROR['계좌번호 길이는 2보다 크고 20보다 작아야 합니다']"
         })

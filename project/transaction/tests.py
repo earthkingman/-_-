@@ -154,6 +154,7 @@ class TransactionViewTest(TestCase):
     # 입금 JSON_DECODE_ERROR
     def test_deposit_json_post_fail(self):
         client = Client()
+
         current_time = datetime.now()
         deal_info = {
             current_time,
@@ -192,8 +193,7 @@ class TransactionViewTest(TestCase):
         response = client.post('/transaction/withdraw', json.dumps(deal_info),
                                content_type='application/json', **headers1)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json(), {
-            'Message': "KEY_ERROR", })
+        self.assertEqual(response.json(), {'Message': "KEY_ERROR", })
 
     # 입금 KEY_ERROR
     def test_deposit_validate_post_success(self):
@@ -410,6 +410,18 @@ class TransactionViewTest(TestCase):
                 }
             ],
             "TotalCount": 2
+        })
+
+        # 거래 내역 조회 출입금 예외
+    def test_transaction_list_transaction_type_withdraw_fail(self):
+        client = Client()
+        current_time = datetime.now()
+
+        response = client.get(
+            '/transaction/list?account_number=계좌1&offset=0&limit=2&transaction_type=출ㅇㅇㅇ금', **headers1)
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {
+            'Message': "VALIDATION_ERROR['거래는 출금과 입금, 기본만 가능합니다.']"
         })
 
    # 거래 내역 조회 시작 날짜가 잘못된 경우
