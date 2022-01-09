@@ -3,9 +3,9 @@ from datetime import datetime, timedelta
 from transaction.constant import DEPOSIT, WITHDRAW
 
 
-# 잔액 검증
-def validate_balance(value):
-    if (value < 0):
+# 잔액 검증(모델)
+def validate_balance(balance: int):
+    if (balance < 0):
         msg = "잔액은 음수가 될 수 없습니다."
         raise ValidationError(msg)
 
@@ -36,6 +36,11 @@ def validate_amount(amount: int) -> int:
 def validate_description(description: str) -> str:
     try:
         description = str(description)
+
+        if len(description) < 1 or len(description) > 20:
+            msg = "적요 길이는 0보다 크고 20보다 작아야 합니다"
+            raise ValidationError(msg)
+
     except (TypeError, ValueError, KeyError):
         msg = "적요를 제대로 적어주세요"
         raise ValidationError(msg)
@@ -46,6 +51,11 @@ def validate_description(description: str) -> str:
 def validate_account_number(account_number: str) -> str:
     try:
         account_number: str = str(account_number)
+
+        if len(account_number) < 3 or len(account_number) > 20:
+            msg = "계좌번호 길이는 2보다 크고 20보다 작아야 합니다"
+            raise ValidationError(msg)
+
     except (TypeError, ValueError, KeyError):
         msg: str = "계좌번호를 제대로 적어주세요"
         raise ValidationError(msg)

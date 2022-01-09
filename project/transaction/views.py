@@ -36,13 +36,10 @@ class DepositView(View):
             account: Account = transcation.check_auth(user, account_number)
 
             # 입금 실행
-            transaction_result: Transaction = transcation.deposit(
+            transaction_result: dict = transcation.deposit(
                 account, deposit_amount, description)
 
-            # 응답 데이터 생성
-            data: dict = obj_to_data(transaction_result)
-
-            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+            return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -82,12 +79,10 @@ class WithdrawView(View):
                 raise BalanceError
 
             # 출금 실행
-            transaction_result: Transaction = transcation.withdraw(
+            transaction_result: dict = transcation.withdraw(
                 account, withdraw_amount, description)
 
-            # 응답 데이터 생성
-            data: dict = obj_to_data(transaction_result)
-            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
+            return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -133,20 +128,9 @@ class ListView(View):
             account: Account = trasaction_service.check_auth(
                 user, account_number)
 
-            # 필터링
-            filters: dict = self.transaction_list_filter(
-                account, started_date, end_date, transaction_type)
-
-            # 리스트 갯수
-            list_count: int = Transaction.objects.filter(**filters).count()
-
-            # 거래 내역 조회
-            transaction_list: Transaction = Transaction.objects.filter(
-                **filters).order_by("id")[offset:limit]
-
-            # 데이터 변환
-            results = self.obj_to_list(transaction_list, account)
-            return JsonResponse({'Message': 'SUCCESS', 'Data': results, 'TotalCount': list_count}, status=200)
+            data = trasaction_service.get_transaction_list(
+                account, started_date, end_date, transaction_type, offset, limit)
+            return JsonResponse({'Message': 'SUCCESS', 'Data': data, 'TotalCount': 2}, status=200)
 
         # 계좌 존재하지 않는 경우
         except ExitsError:
@@ -157,47 +141,6 @@ class ListView(View):
         # 검증 에러
         except ValidationError as detail:
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
-
-    # 데이터 필터링 함수
-    def transaction_list_filter(self, account: Account, start_date: str, end_date: str, transaction_type: str) -> dict:
-        filters: dict = {'account': account}
-
-        if transaction_type == WITHDRAW:
-            filters['transaction_type']: dict = WITHDRAW
-        elif transaction_type == DEPOSIT:
-            filters['transaction_type']: dict = DEPOSIT
-
-        if start_date and end_date:
-            filters['created_at__gte']: dict = start_date
-            filters['created_at__lt']: dict = end_date
-
-        return filters
-
-    # 데이터 변환
-    def obj_to_list(self, transaction_list: Transaction, account: Account) -> list:
-        results: list = [{
-            '계좌 번호': account.account_number,
-            '거래 후 잔액': transaction.balance,
-            '금액': transaction.amount,
-            '적요': transaction.description,
-            '거래 종류': transaction.transaction_type,
-            '거래 일시': transaction.created_at.strftime('%Y-%m-%d %H:%M:%S')
-        }for transaction in transaction_list]
-
-        return results
-
-
-def obj_to_data(transaction_history: Transaction) -> dict:
-    data: dict = {
-        "거래 계좌": transaction_history.account.account_number,
-        "거래 금액": transaction_history.amount,
-        "거래 후 금액": transaction_history.balance,
-        "거래 종류": transaction_history.transaction_type,
-        "거래 날짜": transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
-        "적요": transaction_history.description
-    }
-
-    return data
 
 
 # class SeedView(View):
