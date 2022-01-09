@@ -128,9 +128,10 @@ class ListView(View):
             account: Account = trasaction_service.check_auth(
                 user, account_number)
 
-            data = trasaction_service.get_transaction_list(
+            transaction_history, list_count = trasaction_service.get_transaction_list(
                 account, started_date, end_date, transaction_type, offset, limit)
-            return JsonResponse({'Message': 'SUCCESS', 'Data': data, 'TotalCount': 2}, status=200)
+
+            return JsonResponse({'Message': 'SUCCESS', 'Data': transaction_history, 'TotalCount': list_count}, status=200)
 
         # 계좌 존재하지 않는 경우
         except ExitsError:

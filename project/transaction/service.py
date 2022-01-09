@@ -84,9 +84,9 @@ class TransactionService:
         transaction_list: Transaction = Transaction.objects.filter(
             **filters).order_by("id")[offset:limit]
 
-        transaction_history = self.obj_to_list(transaction_list, account)
+        transaction_history: list = self.obj_to_list(transaction_list, account)
 
-        return transaction_history
+        return transaction_history, list_count
 
         # 데이터 필터링 함수
 
@@ -110,7 +110,7 @@ class TransactionService:
             "거래 금액": transaction_history.amount,
             "거래 후 금액": transaction_history.balance,
             "거래 종류": transaction_history.transaction_type,
-            "거래 날짜": transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+            "거래 일시": transaction_history.created_at.strftime('%Y-%m-%d %H:%M:%S'),
             "적요": transaction_history.description
         }
         return result
