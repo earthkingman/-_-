@@ -41,7 +41,7 @@ class SignUpTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"Message": "USER_ALREADY_EXISTS"})
+        self.assertEqual(response.json(), {"Message": "USER_DUPLICATE"})
 
 
 class LoginTest(TestCase):
