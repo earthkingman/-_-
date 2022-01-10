@@ -34,30 +34,20 @@ def validate_amount(amount: int) -> int:
 
 # 적요 검증
 def validate_description(description: str) -> str:
-    try:
-        description = str(description)
+    description = str(description)
 
-        if len(description) < 1 or len(description) > 20:
-            msg = "적요 길이는 0보다 크고 20보다 작아야 합니다"
-            raise ValidationError(msg)
-
-    except (TypeError, ValueError, KeyError):
-        msg = "적요를 제대로 적어주세요"
+    if len(description) < 1 or len(description) > 20:
+        msg = "적요 길이는 0보다 크고 20보다 작아야 합니다"
         raise ValidationError(msg)
     return description
 
 
 # 계좌번호 검증
 def validate_account_number(account_number: str) -> str:
-    try:
-        account_number: str = str(account_number)
+    account_number: str = str(account_number)
 
-        if len(account_number) < 3 or len(account_number) > 20:
-            msg = "계좌번호 길이는 2보다 크고 20보다 작아야 합니다"
-            raise ValidationError(msg)
-
-    except (TypeError, ValueError, KeyError):
-        msg: str = "계좌번호를 제대로 적어주세요"
+    if len(account_number) < 3 or len(account_number) > 20:
+        msg = "계좌번호 길이는 2보다 크고 20보다 작아야 합니다"
         raise ValidationError(msg)
     return account_number
 

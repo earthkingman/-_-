@@ -64,8 +64,6 @@ class TransactionService:
 
             data = self.obj_to_data(transaction_history)
             return data
-        except Account.DoesNotExist:
-            raise ExitsError
         except OperationalError:
             raise LockError
 
@@ -84,8 +82,6 @@ class TransactionService:
 
             data = self.obj_to_data(transaction_history)
             return data
-        except Account.DoesNotExist:
-            raise ExitsError
         except OperationalError:
             raise LockError
 

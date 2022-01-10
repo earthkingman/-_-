@@ -1,5 +1,5 @@
 from users.models import User
-import bcrypt
+import bcrypt  # SHA-2
 from users.utils import accessSign
 
 
@@ -17,15 +17,17 @@ class PasswordInvalid(Exception):  # 유효하지 않은 비밀번호
 
 class UserService:
     def signup(self, email: str, password: str):
-        hash_password = bcrypt.hashpw(password.encode(
-            'utf-8'), bcrypt.gensalt()).decode('utf-8')
+        salt: bytes = bcrypt.gensalt()
+        encoded_password: bytes = password.encode("utf-8")
+        hashed_password: bytes = bcrypt.hashpw(encoded_password, salt)
+        decoded_password: str = hashed_password.decode("utf-8")
 
         if User.objects.filter(email=email).exists():
             raise UserDuplicateError
 
         User.objects.create(
             email=email,
-            password=hash_password
+            password=decoded_password
         )
 
     def login(self, email: str, password: str):
@@ -34,9 +36,8 @@ class UserService:
         if not user.exists():
             raise UserNotExistError
 
-        # 원리 파악하기
         if bcrypt.checkpw(password.encode('utf-8'), user[0].password.encode('utf-8')):
-            access_token = accessSign(user)
+            access_token: bytes = accessSign(user)
             return access_token
         else:
             raise PasswordInvalid

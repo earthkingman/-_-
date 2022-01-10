@@ -1,5 +1,4 @@
 import json
-import re
 import bcrypt
 import jwt
 from django.views import View
@@ -19,8 +18,8 @@ class SignupView(View):
         user_service: UserService = UserService()
         try:
             data = json.loads(request.body)
-            email = validate_email(data['email'])
-            password = validate_password(data['password'])
+            email: str = validate_email(data['email'])
+            password: str = validate_password(data['password'])
 
             user_service.signup(email, password)
 
@@ -44,8 +43,8 @@ class LoginView(View):
         user_service: UserService = UserService()
         try:
             data = json.loads(request.body)
-            email = validate_email(data['email'])
-            password = validate_password(data['password'])
+            email: str = validate_email(data['email'])
+            password: str = validate_password(data['password'])
 
             access_token = user_service.login(email, password)
             return JsonResponse({'ACCESS_TOKEN': access_token}, status=200)
@@ -59,14 +58,11 @@ class LoginView(View):
         except PasswordInvalid:
             return JsonResponse({'Message': 'INVALID_PASSWORD'}, status=401)
 
-        except JSONDecodeError:
-            return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
-
-        except ValueError:
-            return JsonResponse({'Message': 'ERROR'}, status=400)
-
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
+
+        except JSONDecodeError:
+            return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
 
 
 # class RefreshView(View):

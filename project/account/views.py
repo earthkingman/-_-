@@ -38,14 +38,14 @@ class AccountView(View):
         except AccountDuplicateError:
             return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
 
-        except ExitsError:
-            return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
 
         except JSONDecodeError:
             return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
+
+        except ValidationError as detail:  # 검증 에러
+            return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
 
     @login_decorator
     def get(self, request) -> JsonResponse:
