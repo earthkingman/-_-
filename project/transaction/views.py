@@ -96,7 +96,7 @@ class WithdrawView(View):
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
-        # 값이 안들어오는 경우
+        # 딕셔너리에 값이 없는 경우
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
 

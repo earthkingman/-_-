@@ -50,7 +50,7 @@ class LoginView(View):
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
 
         except UserNotExistError:
-            return JsonResponse({'Message': 'USER_DOES_NOT_EXIST'}, status=401)
+            return JsonResponse({'Message': 'EMAIL_DOES_NOT_EXIST'}, status=401)
 
         except PasswordInvalidError:
             return JsonResponse({'Message': 'INVALID_PASSWORD'}, status=401)

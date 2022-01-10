@@ -163,7 +163,7 @@ class LoginTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 401)
-        self.assertEqual(response.json(), {"Message": "USER_DOES_NOT_EXIST"})
+        self.assertEqual(response.json(), {"Message": "EMAIL_DOES_NOT_EXIST"})
 
     # 비밀번호 오류
     def test_login_invalid_password_post_fail(self):
