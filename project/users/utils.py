@@ -1,5 +1,4 @@
 import jwt
-
 from django.http import JsonResponse
 from django.core.exceptions import ObjectDoesNotExist
 from datetime import datetime, timedelta
@@ -34,30 +33,3 @@ def accessSign(user: User):
                               SECRET_KEY, algorithm="HS256")
 
     return access_token
-
-
-# def refreshSign():
-#     access_token = jwt.encode({"exp": datetime.utcnow(
-#     ) + timedelta(minutes=30000)}, SECRET_KEY, algorithm="HS256")
-
-
-# def refreshVerify(refresh_token: str, userId: int):
-#     try:
-#         SECRET_KEY = my_settings.SECRET
-#         user = User.objects.get(pk=userId)
-
-#         if refresh_token is user.refresh_token:
-#             try:
-#                 jwt.decode(access_token, SECRET_KEY, algorithms="HS256")
-
-#             except jwt.exceptions.DecodeError:
-#                 raise InvalidAccessTokenError
-#             except jwt.ExpiredSignatureError:
-#                 raise InvalidAccessTokenError
-#         else:
-#             raise InvalidAccessTokenError
-
-#     except ValueError:
-#         return JsonResponse({'Message': 'ERROR'}, status=400)
-#     except KeyError:
-#         return JsonResponse({'Message': 'KEY_ERROR'}, status=400)

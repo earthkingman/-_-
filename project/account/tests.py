@@ -5,11 +5,9 @@ import json
 from datetime import datetime, timedelta
 from users.models import User
 from account.models import Account
-from importlib import import_module
 from transaction.service import TransactionService
 from transaction.constant import WITHDRAW, DEPOSIT
 import my_settings
-from django.conf import settings as django_settings
 SECRET_KEY = my_settings.SECRET
 
 

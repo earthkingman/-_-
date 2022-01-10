@@ -1,17 +1,13 @@
 import json
-import bcrypt
 from django.http import JsonResponse
 from json.decoder import JSONDecodeError
 from django.views import View
-from users.models import User
-from account.models import Account
-from transaction.models import Transaction
-# from transaction.helper import update_account, create_transaction, check_auth, trade, AccountAuthError, BalanceError
 from transaction.validators import validate_amount, validate_description, validate_account_number, validate_t_type, validate_end_date, validate_start_date, validate_list_t_type
 from users.utils import login_decorator
 from django.core.exceptions import ValidationError
 from transaction.constant import DEPOSIT, WITHDRAW
-from transaction.service import TransactionService, ExitsError, AccountAuthError, BalanceError, LockError
+from transaction.service import TransactionService
+from transaction.error import ExitsError, AccountAuthError, BalanceError, LockError
 
 
 class DepositView(View):

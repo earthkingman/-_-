@@ -1,18 +1,7 @@
 from users.models import User
 import bcrypt  # SHA-2
 from users.utils import accessSign
-
-
-class UserDuplicateError(Exception):  # 유저 중복
-    pass
-
-
-class UserNotExistError(Exception):  # 존재하지 않는 유저
-    pass
-
-
-class PasswordInvalid(Exception):  # 유효하지 않은 비밀번호
-    pass
+from users.error import UserDuplicateError, PasswordInvalidError, UserNotExistError
 
 
 class UserService:
@@ -40,4 +29,4 @@ class UserService:
             access_token: bytes = accessSign(user)
             return access_token
         else:
-            raise PasswordInvalid
+            raise PasswordInvalidError

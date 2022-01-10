@@ -7,7 +7,8 @@ from users.models import User
 from json.decoder import JSONDecodeError
 from transaction.validators import validate_amount, validate_account_number
 from transaction.constant import DESCRIPTION
-from account.serivce import AccountService, AccountDuplicateError, AccountAuthError, ExitsError
+from account.serivce import AccountService
+from account.error import AccountDuplicateError, AccountAuthError, ExitsError
 from transaction.service import TransactionService
 from django.core.exceptions import ValidationError
 
