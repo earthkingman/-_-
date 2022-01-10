@@ -126,7 +126,11 @@
 
 ### 7. 서비스 구조
 
+
+
 <img src="https://images.velog.io/images/earthkingman/post/b49b3537-cd9c-444a-bf92-c6b8494198f2/image.png" height="800px" width="800px">
+
+
 
 ### 7. API 명세
 
@@ -144,9 +148,9 @@
 
 - 해결
 
-  Access Token은 만료시간을 최대한 짧게하고 아무런 정보가 없는 Refresh Token을 비교적 유효기간을 길게해서  
-  
-  Access Token을 재발급 받을수 있는 로직과  HTTPS를 통신을 사용해 통신 도중에 탈취를 막을 수 있게 설계했습니다. 
+  Access Token은 만료시간을 최대한 짧게하고 아무런 정보가 없는 Refresh Token을 비교적 유효기간을 길
+
+  게해서  Access Token을 재발급 받을수 있는 로직과  HTTPS를 통신을 사용해 통신 도중에 탈취를 막을 수 있게 설계했습니다. 
 
 #### 필터링 분기처리
 
@@ -386,12 +390,10 @@
 
 - 출금 코드
 
-  nowait=False 조회하고자 하는 데이터에 락이 잡혀있는 경우에 락이 풀릴 때까지 대기 (default)
-
-  nowait=True 조회한 데이터가 락이 잡혀있다면 에러 발생
-
   ```python
-      # 출금 (트랜잭션)
+    # nowait=False 조회하고자 하는 데이터에 락이 잡혀있는 경우에 락이 풀릴 때까지 대기 (default)
+    # nowait=True 조회한 데이터가 락이 잡혀있다면 에러 발생  
+    # 출금 (트랜잭션)
       @transaction.atomic
       def withdraw(self, account_number: str, amount: int, description: str) -> dict:
           try:
@@ -412,26 +414,30 @@
   ##           raise LockError
   ```
 
-  계좌 1004번에 입금과 출금을 100원을  동시에 10000번 요청했습니다. 
+  
 
-  ![image-20220109223132025](/Users/ji-park/Library/Application Support/typora-user-images/image-20220109223132025.png)
+  계좌 1004번에 입금과 출금을 100원을  동시에 10000번 요청했습니다.
 
-  데이터베이스를 다른 프로그램을 통해 조회 또는 수정중이었기 때문에 오류가 발생하는 것
+  ![](https://images.velog.io/images/earthkingman/post/29a90e53-6c9f-4e5d-a27f-2785050de5c7/image.png)
 
-  ![image-20220109220713186](/Users/ji-park/Library/Application Support/typora-user-images/image-20220109220713186.png)
+  
 
-  #### 락 예외처리
+  데이터베이스를 다른 프로그램을 통해 조회 또는 수정중이었기 때문에 오류가 발생했습니다.
 
-  락을 예외처리하고 다시 한번 더 진행해보았습니다. 
-  시간이 너무 오래걸려서 10000원에 100원씩 30번 입출금 요청을 했습니다.  
+  ![](https://images.velog.io/images/earthkingman/post/7390233c-6c71-40dc-8401-07fbf6aae279/image.png)
+
+  
+
+  락을 예외처리하고 다시 한번 더 진행해보았습니다. 시간이 너무 오래걸려서 10000원에 100원씩 30번 입출금 요청을 했습니다.  
 
   출금 취소 11번
 
   입금 취소 5번입니다.
 
-  ![image-20220110133950770](/Users/ji-park/Library/Application Support/typora-user-images/image-20220110133950770.png)
+  ![](https://images.velog.io/images/earthkingman/post/a4adb82d-1aa8-413a-8229-a5d30a908e7a/image.png)
 
   
+
 
 
 
