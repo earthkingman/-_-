@@ -17,7 +17,7 @@ class Transaction(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'transaction_index_history'
+        db_table = 'transaction_history'
         indexes = [
             models.Index(fields=['account_id', 'transaction_type']),
             models.Index(fields=['account_id', 'created_at']),
