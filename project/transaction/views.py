@@ -11,7 +11,7 @@ from transaction.validators import validate_amount, validate_description, valida
 from users.utils import login_decorator
 from django.core.exceptions import ValidationError
 from transaction.constant import DEPOSIT, WITHDRAW
-from transaction.service import TransactionService, ExitsError, AccountAuthError, BalanceError
+from transaction.service import TransactionService, ExitsError, AccountAuthError, BalanceError, LockError
 
 
 class DepositView(View):
@@ -37,18 +37,25 @@ class DepositView(View):
 
             # 입금 실행
             transaction_result: dict = transcation.deposit(
-                account, deposit_amount, description)
+                account_number, deposit_amount, description)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
 
+        except LockError:
+            return JsonResponse({'Message': 'LOCK_ERROR'}, status=400)
+
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
+
         except ValidationError as detail:  # 검증 에러
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
+
         except AccountAuthError:  # 권한 에러
             return JsonResponse({'Message': 'AUTH_ERROR'}, status=403)
+
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
+
         except JSONDecodeError:  # json.loads 에러
             return JsonResponse({'Message': 'JSON_DECODE_ERROR'}, status=400)
 
@@ -80,9 +87,12 @@ class WithdrawView(View):
 
             # 출금 실행
             transaction_result: dict = transcation.withdraw(
-                account, withdraw_amount, description)
+                account_number, withdraw_amount, description)
 
             return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
+
+        except LockError:
+            return JsonResponse({'Message': 'LOCK_ERROR'}, status=400)
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)

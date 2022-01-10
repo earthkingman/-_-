@@ -37,10 +37,10 @@ class TransactionViewTest(TestCase):
         account2 = Account.objects.create(
             user=user2, account_number="계좌2", balance=1000)
 
-        deal1 = trasaction_service.deposit(account1, 100, "비트코인 매도")
-        deal2 = trasaction_service.withdraw(account1, 100, "비트코인 매수")
-        deal3 = trasaction_service.deposit(account1, 100, "비트코인 매도")
-        deal4 = trasaction_service.withdraw(account1, 100, "비트코인 매수")
+        deal1 = trasaction_service.deposit("계좌1", 100, "비트코인 매도")
+        deal2 = trasaction_service.withdraw("계좌1", 100, "비트코인 매수")
+        deal3 = trasaction_service.deposit("계좌1", 100, "비트코인 매도")
+        deal4 = trasaction_service.withdraw("계좌1", 100, "비트코인 매수")
 
         # account1.balance = account1.balance + 1000
         # deal1 = Transaction.objects.create(account = account1, amount = 1000, balance = account1.balance, transaction_type = "입금", description = "비트코인 매도")

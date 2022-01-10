@@ -4,6 +4,8 @@ from account.models import Account
 from django.db import transaction
 from transaction.constant import DEPOSIT, WITHDRAW
 from datetime import datetime
+from django.db.utils import OperationalError
+import logging
 
 
 class ExitsError(Exception):  # 계좌 존재 X
@@ -15,6 +17,10 @@ class AccountAuthError(Exception):  # 계좌 권한
 
 
 class BalanceError(Exception):  # 잔액 부족
+    pass
+
+
+class LockError(Exception):  # 서버 오류(락 걸렸을떄)
     pass
 
 
@@ -38,7 +44,6 @@ class TransactionService:
 
         account = Account.objects.filter(
             account_number=account_number, user=user)
-
         if not account.exists():
             raise AccountAuthError
 
@@ -46,32 +51,45 @@ class TransactionService:
 
     # 입금 (트랜잭션)
     @transaction.atomic
-    def deposit(self, account: Account, amount: int, description: str) -> dict:
-        # 계좌 잔액 수정
-        account.balance = account.balance + amount
-        account.save()
-        # 거래 내역 생성
-        transaction_history: Transaction = self.create_transaction(
-            amount, description, account, DEPOSIT)
+    def deposit(self, account_number: str, amount: int, description: str) -> dict:
+        try:
+            # 계좌 잔액 수정
+            account = Account.objects.select_for_update(
+                nowait=False).get(account_number=account_number)
+            account.balance = account.balance + amount
+            account.save()
+            # 거래 내역 생성
+            transaction_history: Transaction = self.create_transaction(
+                amount, description, account, DEPOSIT)
 
-        data = self.obj_to_data(transaction_history)
-
-        return data
+            data = self.obj_to_data(transaction_history)
+            return data
+        except Account.DoesNotExist:
+            raise ExitsError
+        except OperationalError:
+            raise LockError
 
     # 출금 (트랜잭션)
     @transaction.atomic
-    def withdraw(self, account: Account, amount: int, description: str) -> tuple:
-        # 계좌 잔액 수정
-        account.balance = account.balance - amount
-        account.save()
-        # 거래 내역 생성
-        transaction_history: Transaction = self.create_transaction(
-            amount, description, account, WITHDRAW)  # 거래 내역 생성
+    def withdraw(self, account_number: str, amount: int, description: str) -> dict:
+        try:
+            # 계좌 잔액 수정
+            account = Account.objects.select_for_update(
+                nowait=False).get(account_number=account_number)
+            account.balance = account.balance - amount
+            account.save()
+            # 거래 내역 생성
+            transaction_history: Transaction = self.create_transaction(
+                amount, description, account, WITHDRAW)  # 거래 내역 생성
 
-        data = self.obj_to_data(transaction_history)
+            data = self.obj_to_data(transaction_history)
+            return data
+        except Account.DoesNotExist:
+            raise ExitsError
+        except OperationalError:
+            raise LockError
 
-        return data
-
+    # 거래 내역 조회
     def get_transaction_list(self, account: Account, started_date, end_date, transaction_type: str, offset: int, limit: int) -> list:
         # 필터링
         filters = self.transaction_list_filter(
@@ -88,8 +106,7 @@ class TransactionService:
 
         return transaction_history, list_count
 
-        # 데이터 필터링 함수
-
+    # 데이터 필터링 함수
     def transaction_list_filter(self, account: Account, start_date: str, end_date: str, transaction_type: str) -> dict:
         filters = {'account': account}
 

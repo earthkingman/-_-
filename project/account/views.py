@@ -31,11 +31,15 @@ class AccountView(View):
                 user, account_number)
 
             # 기본 금액 입금
-            transaction_service.deposit(account, deposit_amount, DESCRIPTION)
+            transaction_service.deposit(
+                account_number, deposit_amount, DESCRIPTION)
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
         except AccountDuplicateError:
             return JsonResponse({'Message': 'DUPLICATE_ERROR'}, status=400)
+
+        except ExitsError:
+            return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
 
         except KeyError:
             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)
