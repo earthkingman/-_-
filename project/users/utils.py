@@ -28,8 +28,9 @@ def login_decorator(func):
 
 
 def accessSign(user: User):
-    access_token = jwt.encode({'id': user[0].id,
-                               "exp": datetime.utcnow() + timedelta(minutes=300)},
+    access_token = jwt.encode({'id': user[0].id
+                               # "exp": datetime.utcnow() + timedelta(minutes=300)
+                               },
                               SECRET_KEY, algorithm="HS256")
 
     return access_token
