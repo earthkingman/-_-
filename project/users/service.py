@@ -6,13 +6,14 @@ from users.error import UserDuplicateError, PasswordInvalidError, UserNotExistEr
 
 class UserService:
     def signup(self, email: str, password: str):
+
+        if User.objects.filter(email=email).exists():
+            raise UserDuplicateError
+
         salt: bytes = bcrypt.gensalt()
         encoded_password: bytes = password.encode("utf-8")
         hashed_password: bytes = bcrypt.hashpw(encoded_password, salt)
         decoded_password: str = hashed_password.decode("utf-8")
-
-        if User.objects.filter(email=email).exists():
-            raise UserDuplicateError
 
         User.objects.create(
             email=email,

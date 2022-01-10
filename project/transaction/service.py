@@ -3,7 +3,6 @@ from users.models import User
 from account.models import Account
 from django.db import transaction
 from transaction.constant import DEPOSIT, WITHDRAW
-from datetime import datetime
 from django.db.utils import OperationalError
 from transaction.error import ExitsError, AccountAuthError, BalanceError, LockError
 
