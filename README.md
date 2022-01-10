@@ -6,7 +6,9 @@
    - 입금 API
    - 출금 API
 
-2. Localhost에서 돌리는 방법
+2. 배포주소 : http://13.209.65.161
+
+3. Localhost에서 돌리는 방법
 
    Python 3.~ 부터 가능합니다.
 
@@ -139,8 +141,6 @@
 |               | 출금시 계좌의 잔액 변경                   |    OK     |
 |               | 계좌의 잔액 내에서만 출금 가능            |    OK     |
 
-### 
-
 
 
 ### 5. 개발 환경 및 프로젝트 구조
@@ -156,6 +156,8 @@
 ### 6. ER-D
 
 ![image](https://images.velog.io/images/earthkingman/post/d519d304-8cfe-40fd-8ae9-9c3c1418d336/image.png)
+
+
 
 ### 7. 디렉토리 구조
 
@@ -211,17 +213,20 @@
 
 
 
-### 9. API 명세 및 설명
+### 9. API 명세 및 테스트 방법
+
+[API 명세서](https://documenter.getpostman.com/view/10344809/UVXgKwvV)
+
+<img src="https://user-images.githubusercontent.com/48669085/148824271-7f1f1e09-c187-46bf-a8e0-b22545c35b84.png"  width="650px">
+
+<img src="https://user-images.githubusercontent.com/48669085/148824240-7eaf5551-4dcd-4e5d-8cae-a3f21ac10cc8.png"  width="650px">
+
+<img src="https://user-images.githubusercontent.com/48669085/148824255-9fe1222b-59ff-4489-a59a-f1ac5f2289a7.png"  width="650px">
+
+### 10. API 설명
 
 
-
-
-
-
-
-
-
-### 10. 도전했지만 완벽하게 해결하지 못한 부분
+### 11. 도전했지만 완벽하게 해결하지 못한 부분
 
 #### 거래내역이 1억건을 넘어서는 경우 어떻게하면 조회를 빨리 할 수 있을까?
 
@@ -287,7 +292,7 @@
 
   #### 도전
 
-​		계좌 1004번은 10000원을 가지고 있습니다.
+		계좌 1004번은 10000원을 가지고 있습니다.
 
 - 출금 코드 
 
@@ -436,7 +441,5 @@ done
 
 총 45개의 테스트 코드를 작성했고 코드 커버리지는 98%입니다.
 
-![](https://images.velog.io/images/earthkingman/post/e31afc6b-13c6-4852-a4e2-be0b79b7e2b8/image.png)
-
-
+ <img src = "https://user-images.githubusercontent.com/48669085/148824915-d2b1adff-1db5-4043-a9af-79b18c640201.png" width="800px">
 
