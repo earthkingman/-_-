@@ -9,7 +9,6 @@ from importlib import import_module
 from transaction.service import TransactionService
 from .constant import WITHDRAW, DEPOSIT
 import my_settings
-from django.conf import settings as django_settings
 SECRET_KEY = my_settings.SECRET
 
 
@@ -42,16 +41,9 @@ class TransactionViewTest(TestCase):
         deal3 = trasaction_service.deposit("계좌1", 100, "비트코인 매도")
         deal4 = trasaction_service.withdraw("계좌1", 100, "비트코인 매수")
 
-        # account1.balance = account1.balance + 1000
-        # deal1 = Transaction.objects.create(account = account1, amount = 1000, balance = account1.balance, transaction_type = "입금", description = "비트코인 매도")
-
-        # account1.balance = account1.balance + 5000
-        # deal2 = Transaction.objects.create(account = account2, amount = 5000, balance = account2.balance, transaction_type = "출금", description = "비트코인 매수")
-
     def tearDown(self):
         User.objects.all().delete()
         Account.objects.all().delete()
-        # Transaction.objects.all().delete()
 
     # 입금 성공
     def test_deposit_post_success(self):

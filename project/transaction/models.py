@@ -1,6 +1,6 @@
 from django.db import models
 from account.models import Account
-from .validators import validate_amount, validate_balance, validate_t_type
+from transaction.validators import validate_amount, validate_balance, validate_t_type
 
 # Create your models here.
 
