@@ -39,10 +39,12 @@ class DepositView(View):
             transaction_result: dict = transcation.deposit(
                 account_number, deposit_amount, description)
 
-            return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
+            data = transcation.obj_to_data(transaction_result)
+
+            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
         except LockError:
-            return JsonResponse({'Message': 'LOCK_ERROR'}, status=400)
+            return JsonResponse({'Message': 'DEPOSIT_ERROR'}, status=400)
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -89,10 +91,12 @@ class WithdrawView(View):
             transaction_result: dict = transcation.withdraw(
                 account_number, withdraw_amount, description)
 
-            return JsonResponse({'Message': 'SUCCESS', "Data": transaction_result}, status=201)
+            data = transcation.obj_to_data(transaction_result)
+
+            return JsonResponse({'Message': 'SUCCESS', "Data": data}, status=201)
 
         except LockError:
-            return JsonResponse({'Message': 'LOCK_ERROR'}, status=400)
+            return JsonResponse({'Message': 'WITHDRAW_ERROR'}, status=400)
 
         except ExitsError:
             return JsonResponse({'Message': 'EXIST_ERROR'}, status=400)
@@ -152,30 +156,3 @@ class ListView(View):
         # 검증 에러
         except ValidationError as detail:
             return JsonResponse({'Message': 'VALIDATION_ERROR' + str(detail)}, status=400)
-
-
-# class SeedView(View):
-#     def post(self, request):
-#         try:
-#             for i in range(1, 11):
-#                 user = User.objects.create(
-#                     email="test" + str(i) + "@8Percent.com",
-#                     password=bcrypt.hashpw("1234".encode(
-#                         'utf-8'), bcrypt.gensalt()).decode('utf-8')
-#                 )
-#                 account = Account.objects.create(
-#                     user=user,
-#                     account_number="계좌" + str(i),
-#                     balance=1000
-#                 )
-#             account = Account.objects.get(account_number="계좌1")
-#             for j in range(1, 300000):
-#                 print(j)
-#                 trade(account, 100, "월급", "입금")
-#                 trade(account, 50, "카드값", "출금")
-#                 trade(account, 30, "비트코인", "출금")
-#                 trade(account, 5, "햄버거", "출금")
-#                 trade(account, 5, "피자", "출금")
-#             return JsonResponse({'Message': 'SUCCESS'}, status=200)
-#         except KeyError:
-#             return JsonResponse({'Message': 'KEY_ERROR'}, status=400)

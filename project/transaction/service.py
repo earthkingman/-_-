@@ -38,7 +38,7 @@ class TransactionService:
         return transaction_history
 
     # 계좌 존재 및 권한 확인
-    def check_auth(self, user, account_number):
+    def check_auth(self, user: Account, account_number: str):
         if not Account.objects.filter(account_number=account_number).exists():
             raise ExitsError
 
@@ -51,10 +51,10 @@ class TransactionService:
 
     # 입금 (트랜잭션)
     @transaction.atomic
-    def deposit(self, account_number: str, amount: int, description: str) -> dict:
+    def deposit(self, account_number: str, amount: int, description: str) -> Transaction:
         try:
             # 계좌 잔액 수정
-            account = Account.objects.select_for_update(
+            account: Account = Account.objects.select_for_update(
                 nowait=False).get(account_number=account_number)
             account.balance = account.balance + amount
             account.save()
@@ -62,17 +62,16 @@ class TransactionService:
             transaction_history: Transaction = self.create_transaction(
                 amount, description, account, DEPOSIT)
 
-            data = self.obj_to_data(transaction_history)
-            return data
+            return transaction_history
         except OperationalError:
             raise LockError
 
     # 출금 (트랜잭션)
     @transaction.atomic
-    def withdraw(self, account_number: str, amount: int, description: str) -> dict:
+    def withdraw(self, account_number: str, amount: int, description: str) -> Transaction:
         try:
             # 계좌 잔액 수정
-            account = Account.objects.select_for_update(
+            account: Account = Account.objects.select_for_update(
                 nowait=False).get(account_number=account_number)
             account.balance = account.balance - amount
             account.save()
@@ -80,8 +79,7 @@ class TransactionService:
             transaction_history: Transaction = self.create_transaction(
                 amount, description, account, WITHDRAW)  # 거래 내역 생성
 
-            data = self.obj_to_data(transaction_history)
-            return data
+            return transaction_history
         except OperationalError:
             raise LockError
 
@@ -104,7 +102,7 @@ class TransactionService:
 
     # 데이터 필터링 함수
     def transaction_list_filter(self, account: Account, start_date: str, end_date: str, transaction_type: str) -> dict:
-        filters = {'account': account}
+        filters: dict = {'account': account}
 
         if transaction_type == WITHDRAW:
             filters['transaction_type'] = WITHDRAW

@@ -62,6 +62,7 @@ class TransactionViewTest(TestCase):
             "amount": 100,
             "description": "월급",
         }
+        date = deal1.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.post('/transaction/deposit', json.dumps(deal_info),
                                content_type='application/json', **headers1)
         self.assertEqual(response.status_code, 201)
@@ -72,7 +73,7 @@ class TransactionViewTest(TestCase):
                 "거래 금액": 100,
                 "거래 후 금액": 1100,
                 "거래 종류": "입금",
-                "거래 일시": deal1['거래 일시'],
+                "거래 일시": date,
                 "적요": "월급"
             }})
 
@@ -85,6 +86,7 @@ class TransactionViewTest(TestCase):
             "amount": 100,
             "description": "비트코인 매수",
         }
+        date = deal1.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.post('/transaction/withdraw', json.dumps(deal_info),
                                content_type='application/json', **headers1)
         self.assertEqual(response.status_code, 201)
@@ -95,7 +97,7 @@ class TransactionViewTest(TestCase):
                 "거래 금액": 100,
                 "거래 후 금액": 900,
                 "거래 종류": "출금",
-                "거래 일시": deal1['거래 일시'],
+                "거래 일시": date,
                 "적요": "비트코인 매수"
             }})
 
@@ -318,7 +320,8 @@ class TransactionViewTest(TestCase):
     #  계좌 리스트 조회
     def test_transaction_list_get_success(self):
         client = Client()
-
+        date = deal1.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        date2 = deal2.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.get(
             '/transaction/list?account_number=계좌1&offset=0&limit=2', **headers1)
         self.assertEqual(response.status_code, 200)
@@ -327,11 +330,11 @@ class TransactionViewTest(TestCase):
             'Data': [
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1100, '금액': 100, '적요': '비트코인 매도',
-                    '거래 종류': '입금', '거래 일시': deal1['거래 일시']
+                    '거래 종류': '입금', '거래 일시': date
                 },
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1000, '금액': 100, '적요': '비트코인 매수',
-                    '거래 종류': '출금', '거래 일시': deal2['거래 일시']
+                    '거래 종류': '출금', '거래 일시': date2
                 }
             ],
             "TotalCount": 4
@@ -343,6 +346,8 @@ class TransactionViewTest(TestCase):
         current_time = datetime.now()
         start_date: datetime = current_time.strftime("%Y-%m-%d")
         end_date: datetime = current_time.strftime("%Y-%m-%d")
+        date = deal1.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        date2 = deal2.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.get(
             '/transaction/list?account_number=계좌1&offset=0&limit=2&started_at=' + start_date + '&end_at=' + end_date, **headers1)
         self.assertEqual(response.status_code, 200)
@@ -351,11 +356,11 @@ class TransactionViewTest(TestCase):
             'Data': [
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1100, '금액': 100, '적요': '비트코인 매도',
-                    '거래 종류': '입금', '거래 일시': deal1['거래 일시']
+                    '거래 종류': '입금', '거래 일시': date
                 },
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1000, '금액': 100, '적요': '비트코인 매수',
-                    '거래 종류': '출금', '거래 일시': deal2['거래 일시']
+                    '거래 종류': '출금', '거래 일시': date2
                 }
             ],
             "TotalCount": 4
@@ -365,7 +370,8 @@ class TransactionViewTest(TestCase):
     def test_transaction_list_transaction_type_deposit_success(self):
         client = Client()
         current_time = datetime.now()
-
+        date = deal1.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        date3 = deal3.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.get(
             '/transaction/list?account_number=계좌1&offset=0&limit=2&transaction_type=입금', **headers1)
         self.assertEqual(response.status_code, 200)
@@ -374,11 +380,11 @@ class TransactionViewTest(TestCase):
             'Data': [
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1100, '금액': 100, '적요': '비트코인 매도',
-                    '거래 종류': '입금', '거래 일시': deal1['거래 일시']
+                    '거래 종류': '입금', '거래 일시': date
                 },
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1100, '금액': 100, '적요': '비트코인 매도',
-                    '거래 종류': '입금', '거래 일시': deal3['거래 일시']
+                    '거래 종류': '입금', '거래 일시': date3
                 }
             ],
             "TotalCount": 2
@@ -388,7 +394,8 @@ class TransactionViewTest(TestCase):
     def test_transaction_list_transaction_type_withdraw_success(self):
         client = Client()
         current_time = datetime.now()
-
+        date2 = deal2.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        date4 = deal4.created_at.strftime('%Y-%m-%d %H:%M:%S')
         response = client.get(
             '/transaction/list?account_number=계좌1&offset=0&limit=2&transaction_type=출금', **headers1)
         self.assertEqual(response.status_code, 200)
@@ -397,11 +404,11 @@ class TransactionViewTest(TestCase):
             'Data': [
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1000, '금액': 100, '적요': '비트코인 매수',
-                    '거래 종류': '출금', '거래 일시': deal2['거래 일시']
+                    '거래 종류': '출금', '거래 일시': date2
                 },
                 {
                     '계좌 번호': '계좌1', '거래 후 잔액': 1000, '금액': 100, '적요': '비트코인 매수',
-                    '거래 종류': '출금', '거래 일시': deal4['거래 일시']
+                    '거래 종류': '출금', '거래 일시': date4
                 }
             ],
             "TotalCount": 2

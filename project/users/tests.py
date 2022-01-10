@@ -165,19 +165,6 @@ class LoginTest(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(response.json(), {"Message": "USER_DOES_NOT_EXIST"})
 
-    # # 비밀번호 오류
-    # def test_login_invalid_email(self):
-    #     client = Client()
-    #     user = {
-    #         "email": "ji-park@42seoul.com",
-    #         "password": "42seoul2",
-    #     }
-    #     response = client.post(
-    #         "/users/login", json.dumps(user), content_type="application/json"
-    #     )
-    #     self.assertEqual(response.status_code, 401)
-    #     self.assertEqual(response.json(), {"Message": "INVALID_PASSWORD"})
-
     # 비밀번호 오류
     def test_login_invalid_password_post_fail(self):
         client = Client()
