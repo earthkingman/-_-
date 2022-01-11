@@ -1,4 +1,4 @@
-### 1. 과제 안내
+## 1. 과제 안내
 
 1. REST API 기능
 
@@ -10,7 +10,7 @@
 
 3. Localhost에서 돌리는 방법
 
-   Python 3.~ 부터 가능합니다.
+   Django 버전이 4.0이라서 Python 3.8 부터 가능합니다.
 
    - 프로젝트 설치
 
@@ -61,7 +61,7 @@
 
      <img src = "https://images.velog.io/images/earthkingman/post/9861da11-b649-4385-9fbc-f66511467c40/image.png" width="300px">
 
-### 2. 문제 정의
+## 2. 문제 정의
 
 - 문제 
 
@@ -71,7 +71,7 @@
 
   사용자는 계좌를 생성할 수 있고, 자기의 계좌에만 입출금이 가능하며 거래내역을 생성하고 조회할 수 있는 프로그램 제작
 
-### 3. 문제별 해결 방법
+## 3. 문제별 해결 방법
 
 #### API 보안 
 
@@ -123,9 +123,7 @@
 - 동시에 요청이 들어온다면 요청을 직렬화하지 못했습니다. 
 - 정상적으로 출금과 입금이 안되면 오류를 반환해 클라이언트에게 알려주기로 정했습니다. 
 
-
-
-### 4. 구현 사항
+## 4. 구현 사항
 
 | 기능          | 구현사항                                  | 구현 여부 |
 | :------------ | :---------------------------------------- | :-------: |
@@ -143,7 +141,7 @@
 
 
 
-### 5. 개발 환경 및 프로젝트 구조
+## 5. 개발 환경 및 프로젝트 구조
 
 <img src = "https://user-images.githubusercontent.com/48669085/148770760-b9ab6029-9005-4661-b0e6-6b31471d3c69.png" width="650px">
 
@@ -153,13 +151,15 @@
 - sqlite 3.0
 ```
 
-### 6. ER-D
+
+
+## 6. ER-D
 
 ![image](https://images.velog.io/images/earthkingman/post/d519d304-8cfe-40fd-8ae9-9c3c1418d336/image.png)
 
 
 
-### 7. 디렉토리 구조
+## 7. 디렉토리 구조
 
 ```bash
 ├── Makefile
@@ -205,7 +205,7 @@
 
 
 
-### 8. 서비스 구조
+## 8. 서비스 구조
 
 
 
@@ -213,7 +213,7 @@
 
 
 
-### 9. API 명세 및 테스트 방법
+## 9. API 명세 및 테스트 방법
 
 [API 명세서](https://documenter.getpostman.com/view/10344809/UVXgKwvV)
 
@@ -223,10 +223,11 @@
 
 <img src="https://user-images.githubusercontent.com/48669085/148824255-9fe1222b-59ff-4489-a59a-f1ac5f2289a7.png"  width="650px">
 
-### 10. API 설명
 
 
-### 11. 도전했지만 완벽하게 해결하지 못한 부분
+## 10. API 설명
+
+## 11. 도전했지만 완벽하게 해결하지 못한 부분
 
 #### 거래내역이 1억건을 넘어서는 경우 어떻게하면 조회를 빨리 할 수 있을까?
 
@@ -238,9 +239,66 @@
 
 - 목표
 
-  조회 속도를 개선해야합니다.
+  인덱스를 생성해서 조회 속도를 개선해야합니다. 인덱스의 구조를 파악하고, 왜 빨라지는지 어떻게 빨라지는지 확인합니다.
 
 - 해결
+
+   테이블을 생성해보겠습니다.
+
+  - Account(계좌), Users(사용자), Transaction(거래내역) 테이블 생성
+
+    자동적으로 인덱스는 기본 키(primary key)나 유일 키(unique) 제약 조건을 지정하면 자동으로 생성됩니다. 
+
+    그래서 DBeaver로 생성된 인덱스들을 확인 했습니다.
+
+    - Account 테이블에서는 account_number(유니크 키), user_id (외래키),  
+
+    - Transaction 테이블에서는 account_id(외래키)
+
+    - User 테이블에서는 email(유니크키)
+
+    외래키가 인덱스로 왜 생겼는지 찾아 보았는데 데이터베이스 종류마다 다르다고 합니다. 
+
+    생성해서 얻는 이득은 참조 키를 빠르게 확인하고 테이블 스캔을 하지 않으려고 인덱스를 생성합니다.
+
+    
+
+  ![](https://images.velog.io/images/earthkingman/post/88577f81-040a-45f2-a477-8bc0ab051a80/image.png)
+
+  ![](https://images.velog.io/images/earthkingman/post/ba91e1d6-1253-43b9-a412-d3012492fe69/image.png)
+
+  ​	
+
+  - 날짜로 조회하기(데이터 약 백만개)
+
+    ```sqlite
+    SELECT "transaction_transaction"."id", "transaction_transaction"."account_id", "transaction_transaction"."balance", "transaction_transaction"."amount", "transaction_transaction"."transaction_type", "transaction_transaction"."description", "transaction_transaction"."created_at" 
+    FROM "transaction_transaction"
+    WHERE ("transaction_transaction"."account_id" = 1
+    AND "transaction_transaction"."created_at" >= '2022-01-10 00:00:00' 
+    AND "transaction_transaction"."created_at" <= '2022-01-12 00:00:00' ) 
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    ```
+
+    결과는 대략 127ms~ 138ms 정도 걸립니다.
+
+    ![](https://images.velog.io/images/earthkingman/post/7157ae29-4c47-45e6-805f-722e956d8c63/image.png)
+
+  - 인덱싱을 사용해서 조회 속도를 개선해보겠습니다.
+
+    인덱스를 사용하는 이유는 메모리 내에서 원하는 데이터가 저장되니 주소를 조회할 수 있고, 마지막에 디스크를 접근하면 되기 때문에 인덱싱을 사용하면 속도가 개선됩니다. 즉 disk I/O를 줄여서 속도를 개선하는 것입니다.
+
+  - 인덱스의 구조
+
+    B-Tree(Balanced Tree)의 구조를 가지고 있고, 인덱스로 지정한 값들은 오름차순으로 정렬되어 있습니다.
+
+  
+
+  - 인덱
+
+  
+
+  
 
   멀티 컬럼 인덱스를 생성했습니다.
 
@@ -290,9 +348,9 @@
 
   ![](https://images.velog.io/images/earthkingman/post/92383ca7-2236-4471-a24f-14946fe1916f/image.png)
 
-  #### 도전
+  #### 방법 1. 트랜잭션을 사용한 직렬화
 
-		계좌 1004번은 10000원을 가지고 있습니다.
+  계좌 1004번은 10000원을 가지고 있습니다.
 
 - 출금 코드 
 
@@ -359,13 +417,29 @@ done
 
 - 두번째 결과
 
-  서버 내부 에러가 발생하지 않았습니다.
+  서버 내부 에러가 발생하지 않았습니다. 
 
   9500원
 
   ![](https://images.velog.io/images/earthkingman/post/3ad2743c-a10c-4159-95e0-6a3e0236e87d/image.png)
 
-#### select_for_update을 사용해 락을 거는 방법
+- 결론
+
+  ![image-20220111162242644](/Users/ji-park/Library/Application Support/typora-user-images/image-20220111162242644.png)
+
+  sqlite의 격리수준은 Serializable로 가장 높은 격리수준을 가지고 있습니다. 
+
+  저는 한 트랜잭션에서 사용되는 자원들이 처리가 되고 있을 경우 데이터베이스에서 지정한 격리수준에 맞게
+
+  다른 트랜잭션들이 접근하면 처리가 끝날 때까지 대기시키는 것으로 알고 있었습니다.
+
+  근데 실제로 실행해보니 데이터 동기화가 제대로 이루어지지 않아서 500원이라는 손해를 보게 되었습니다. 
+
+  동시성 문제를 해결하지 못했습니다.
+
+  
+
+#### 방법 2. select_for_update을 사용해 락을 거는 방법
 
 ![](https://images.velog.io/images/earthkingman/post/d3c0bb3d-c7b9-4cb6-864b-41c0e20bacfb/image.png)
 
@@ -423,9 +497,7 @@ done
 
 ![](https://images.velog.io/images/earthkingman/post/c979a516-f69e-4604-a0a2-af69a8b14114/image.png)
 
-
-
-#### 결과
+- 결론
 
 ![](https://images.velog.io/images/earthkingman/post/56d9fd71-944a-4dce-8e41-6fba83742203/image.png)
 
@@ -442,4 +514,3 @@ done
 총 45개의 테스트 코드를 작성했고 코드 커버리지는 98%입니다.
 
  <img src = "https://user-images.githubusercontent.com/48669085/148824915-d2b1adff-1db5-4043-a9af-79b18c640201.png" width="800px">
-
