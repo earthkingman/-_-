@@ -683,15 +683,19 @@
 
   ![](https://images.velog.io/images/earthkingman/post/ba91e1d6-1253-43b9-a412-d3012492fe69/image.png)
 
-  ​	서버에서 실제로 호출하는 Query 입니다.
+  ​	서버에서 실제로 호출하는 Query 입니다. 
+
+  ​	실행계획을 통해 이 쿼리들이 인덱스를 타는지 확인해보았습니다.
 
   - 조회하기 
 
     ```sql
-    SELECT * FROM "transaction_transaction" WHERE "transaction_transaction"."account_id" = 1 ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    SELECT * FROM "transaction_transaction" 
+    WHERE "transaction_transaction"."account_id" = 1 
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
     ```
 
-    
+    ![](https://images.velog.io/images/earthkingman/post/c928772c-f97e-443f-91c8-7565b73aa6c8/image.png)
 
   - 날짜로 조회하기 
 
@@ -703,19 +707,47 @@
     ORDER BY "transaction_transaction"."id" ASC LIMIT 10
     ```
 
-    
+    ![](https://images.velog.io/images/earthkingman/post/5a59ec80-6611-4c62-bdf4-2b2f8e3d0107/image.png)
 
   - 입출금 구분으로 조회하기  
 
     ```sqlite
-    SELECT * FROM "transaction_transaction" WHERE ("transaction_transaction"."account_id" = 1 AND "transaction_transaction"."transaction_type" = 출금) ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    SELECT * FROM "transaction_transaction" 
+    WHERE ("transaction_transaction"."account_id" = 1
+    AND "transaction_transaction"."transaction_type" = 출금)
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
     ```
+
+    ![](https://images.velog.io/images/earthkingman/post/607957d6-b8ea-4423-b628-592782f58c59/image.png)
 
     
 
-  - 인덱스 만들기
+  - 결과(데이터 약 100만개)
 
-    인덱스를 사용하는 이유는 메모리 내에서 원하는 데이터가 저장되니 주소를 조회할 수 있고, 마지막에 디스크를 접근하면 되기 때문에 인덱싱을 사용하면 속도가 개선됩니다. 즉 disk I/O를 줄여서 속도를 개선하는 것입니다. 
+    | 검색 조건        | 자동으로 생성된 인덱스 사용 | 자동으로 생성된 인덱스 지워보기 |
+    | ---------------- | --------------------------- | ------------------------------- |
+    | 기본             | 66ms (인덱스 탔음)          | 103ms (인덱스 안탐)             |
+    | 날짜로 검색      | 426ms (인덱스 탔음)         | 399ms  (인덱스 안탐)            |
+    | 입출금 검색      | 254ms (인덱스 탔음)         | 231ms  (인덱스 안탐)            |
+    | 날짜 입출금 검색 | 560ms (인덱스 탔음)         | 526ms  (인덱스 안탐)            |
+
+    기본 검색만 속도가 빨라지고 오히려 나머지는 속도가 느려졌습니다. 이유를 정확하게 파악하지는 못했습니다.
+
+    제 추측은 인덱스를 찾아가는 검색 조건이 아니라 (인덱스 값이 날짜, 입출금 종류) 조건에 맞는지 여부를 검증하는 체크조건이 되기 때문에 속도가 오히려 줄어든것 같습니다.
+
+    
+
+  - 인덱스를 사용하는 이유
+
+    메모리 내에서 원하는 데이터가 저장되니 주소를 조회할 수 있고, 마지막에 디스크를 접근하면 되기 때문에 인덱싱을 사용하면 속도가 개선됩니다. 즉 disk I/O를 줄여서 속도를 개선하는 것입니다. 
+
+    - 멀티컬럼 인덱스 사용
+
+      하나 이상의 키 칼럼 조건으로 같은 집합의 컬럼들이 자주 조회된다면 이러한 칼럼을 모두 포함하는 인덱스를 구성할 수 있습니다. 
+
+      제 서비스는(계좌번호, 날짜), (계좌번호, 입출금)으로 조회하기 때문에 멀티컬럼 인덱스가 적합합니다. 
+
+      인덱스 컬럼 순서에 맞춰 조회 순서를 지키는 편이 좋습니다. 만약에 맞추지 않는다면 옵티마이저가 조회 조건의 컬럼을 인덱스 컬럼 순서에 맞춰 재배열하기 때문입니다. 
 
     
 
@@ -723,22 +755,43 @@
 
       B-Tree(Balanced Tree)의 구조를 가지고 있고, 인덱스로 지정한 값들은 오름차순으로 정렬되어 있습니다.
 
-    - 
-
       
 
     - 인덱스를 타게하는 방법
 
-      Where 절이 있고, Where절에 만들어 놓은 인덱스가 존재하면  인덱스를 타게 할 수 있습니다.
+      Where절에 만들어 놓은 인덱스가 존재하면  인덱스를 타게 할 수 있습니다. 
 
       ```
-      explain SELECT *
+      SELECT *
+      FROM "transaction_transaction";
+      ```
+
+      ![](https://images.velog.io/images/earthkingman/post/387dfbb1-1e22-45d1-b4ef-a2e8b30aab52/image.png)
+
+      ```sql
+      SELECT *
       FROM "transaction_transaction"
-      WHERE ("transaction_transaction"."account_id" = 7 )
-      ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+      WHERE ("transaction_transaction"."account_id" = 7
+      AND "transaction_transaction"."transaction_type" = '출금')
+      ORDER BY "transaction_transaction"."id" ASC LIMIT 10;
       ```
 
-      
+      ![](https://images.velog.io/images/earthkingman/post/607957d6-b8ea-4423-b628-592782f58c59/image.png)
+
+    ​		그리고 조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
+
+    ![](https://images.velog.io/images/earthkingman/post/facdb5a3-6c0f-473b-a948-377f8046f7e8/image.png)
+
+    ```sql
+    SELECT *
+    FROM "transaction_history"
+    WHERE ("transaction_history"."account_id" = 7 )
+    ORDER BY "transaction_history"."id" ASC LIMIT 10;
+    ```
+
+    ![image-20220112040224831](/Users/ji-park/Library/Application Support/typora-user-images/image-20220112040224831.png)
+
+    
 
     - 인덱스를 생성하는 기준
 
@@ -756,13 +809,9 @@
 
       저는 조회에 필요한 'account_id', 'transaction_type', 'created_at' 컬럼을 인덱스로 생성했습니다.
 
-      하지만 주의해야할 것이있습니다. 
+      하지만 주의해야할 것이있습니다. 카디널리티는 높은순에서 낮은순으로 나열해야 합니다.
 
-      제 서비스에서는 account_id는 항상 포함이되고 있지만 created_at과 transaction_type은 필터 경우에 따라 다릅니다.
-
-      
-
-    - 카디널리티가 높은순에서 낮은순  `created_at, account_id, transaction_type`
+      - 카디널리티가 높은순에서 낮은순  `created_at, account_id, transaction_type`
 
       ```python
        class Meta:
@@ -775,7 +824,7 @@
 
       
 
-    - 카디널리티가 낮은순에서 높은순 `transaction_type, account_id, created_at, `
+      - 카디널리티가 낮은순에서 높은순 `transaction_type, account_id, created_at, `
 
       ```python
        class Meta:
@@ -786,52 +835,60 @@
               ]
       ```
 
-      ![image-20220111164528625](/Users/ji-park/Library/Application Support/typora-user-images/image-20220111164528625.png)
+      - 결과(데이터 약 100만개)
 
-      ****
+         조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
 
-    - - 
+        | 검색 조건        | 높은순에서 낮은순 (날짜->계좌->종류)            | 낮은순에서 높은순 (종류->계좌->날짜)            |
+        | ---------------- | ----------------------------------------------- | ----------------------------------------------- |
+        | 기본             | 92ms(인덱스 안탐)                               | 93ms  (인덱스 안탐)                             |
+        | 날짜로 검색      | 239ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY | 402ms (인덱스 안탐)                             |
+        | 입출금 검색      | 220ms (인덱스 안탐)                             | 135ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
+        | 날짜 입출금 검색 | 478ms (인덱스 탐) USE TEMP B-TREE FOR ORDER BY  | 150ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
 
-    - 결과(데이터 약 100만개)
+        ![](https://images.velog.io/images/earthkingman/post/cc491452-735c-4ed3-a5f0-fe3a55544945/image.png)
 
-  | 검색 조건        | 자동으로 생성된 인덱싱 | 자동으로 생성된 인덱스를 지운 경우 |
-  | ---------------- | ---------------------- | ---------------------------------- |
-  | 기본             | 76ms                   | 106ms                              |
-  | 날짜로 검색      | 423ms                  | 401ms                              |
-  | 입출금 검색      | 247ms                  | 230ms                              |
-  | 날짜 입출금 검색 | 542ms                  |                                    |
+        
 
-  멀티 컬럼 인덱스를 생성했습니다.
+    - 주의해야하는 점
 
-  ```python
-  class Transaction(models.Model):
-      account = models.ForeignKey(Account, null=False, on_delete=models.CASCADE)
-      balance = models.PositiveBigIntegerField(null=False, validators=[validate_balance])
-      amount = models.PositiveBigIntegerField(null=False, validators=[validate_amount])
-      t_type = models.CharField(max_length=2, null=False,validators=[validate_type])
-      description = models.CharField(max_length=50, null=False)
-      created_at = models.DateTimeField(auto_now_add=True)
-  
-      class Meta:
-          db_table = 'transaction_index_history'
-          indexes = [
-              models.Index(fields=['account_id', 't_type']),
-              models.Index(fields=['account_id', 'created_at']),
-          ]
-  
-  ```
+      
 
-  인덱스를 생성하고 성능을 테스트해봤습니다.
+    - 결론
 
-  **데이터 약 오백만 개**
+      ```python
+      class Transaction(models.Model):
+          account = models.ForeignKey(Account, null=False, on_delete=models.CASCADE)
+          balance = models.PositiveBigIntegerField(null=False, validators=[validate_balance])
+          amount = models.PositiveBigIntegerField(null=False, validators=[validate_amount])
+          t_type = models.CharField(max_length=2, null=False,validators=[validate_type])
+          description = models.CharField(max_length=50, null=False)
+          created_at = models.DateTimeField(auto_now_add=True)
+      
+          class Meta:
+              db_table = 'transaction_index_history'
+              indexes = [
+                  models.Index(fields=['account_id', 't_type']),
+                  models.Index(fields=['account_id', 'created_at']),
+              ]
+      
+      ```
 
-| 검색 조건   | 인덱싱 전 속도 | 인덱싱 후 속도 |
-| ----------- | -------------- | -------------- |
-| 기본        | 1070ms         | 212ms          |
-| 날짜로 검색 | 1965ms         | 715ms          |
-| 입출금 검색 | 1070ms         | 203ms          |
+      
 
-테스트 결과 내용은 [상세보기](https://velog.io/@earthkingman/20211230%EC%9D%B8%EB%8D%B1%EC%8B%B1-%EB%A7%A4%EA%B8%B0%EA%B8%B0-wuu1y4ik) 를 참고해주세요
+    - 인덱스를 생성하고 성능을 테스트해봤습니다.
+
+      - **데이터 약 오백만 개**
+
+      | 검색 조건   | 인덱싱 전 속도 | 인덱싱 후 속도 |
+      | ----------- | -------------- | -------------- |
+      | 기본        | 1070ms         | 212ms          |
+      | 날짜로 검색 | 1965ms         | 715ms          |
+      | 입출금 검색 | 1070ms         | 203ms          |
+
+      
+
+  테스트 결과 내용은 [상세보기](https://velog.io/@earthkingman/20211230%EC%9D%B8%EB%8D%B1%EC%8B%B1-%EB%A7%A4%EA%B8%B0%EA%B8%B0-wuu1y4ik) 를 참고해주세요
 
 실행계획을 알아보고 같이 진행했다면 더욱 같은 쿼리를 두번 날리게 되면 두번째 쿼리가 훨씬 빠릅니다. 이미 데이터가 캐싱되어있기 때문입니다.
 
