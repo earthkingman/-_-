@@ -2,8 +2,6 @@ import json
 from django.views import View
 from django.http import JsonResponse
 from users.utils import login_decorator
-from account.models import Account
-from users.models import User
 from json.decoder import JSONDecodeError
 from transaction.validators import validate_amount, validate_account_number
 from transaction.constant import DESCRIPTION
