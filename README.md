@@ -1,4 +1,4 @@
-### 1. 과제 안내
+## 1. 과제 안내
 
 1. REST API 기능
 
@@ -10,7 +10,7 @@
 
 3. Localhost에서 돌리는 방법
 
-   Python 3.~ 부터 가능합니다.
+   Django 버전이 4.0이라서 Python 3.8 부터 가능합니다.
 
    - 프로젝트 설치
 
@@ -61,7 +61,7 @@
 
      <img src = "https://images.velog.io/images/earthkingman/post/9861da11-b649-4385-9fbc-f66511467c40/image.png" width="300px">
 
-### 2. 문제 정의
+## 2. 문제 정의
 
 - 문제 
 
@@ -71,7 +71,7 @@
 
   사용자는 계좌를 생성할 수 있고, 자기의 계좌에만 입출금이 가능하며 거래내역을 생성하고 조회할 수 있는 프로그램 제작
 
-### 3. 문제별 해결 방법
+## 3. 문제별 해결 방법
 
 #### API 보안 
 
@@ -123,9 +123,7 @@
 - 동시에 요청이 들어온다면 요청을 직렬화하지 못했습니다. 
 - 정상적으로 출금과 입금이 안되면 오류를 반환해 클라이언트에게 알려주기로 정했습니다. 
 
-
-
-### 4. 구현 사항
+## 4. 구현 사항
 
 | 기능          | 구현사항                                  | 구현 여부 |
 | :------------ | :---------------------------------------- | :-------: |
@@ -143,7 +141,7 @@
 
 
 
-### 5. 개발 환경 및 프로젝트 구조
+## 5. 개발 환경 및 프로젝트 구조
 
 <img src = "https://user-images.githubusercontent.com/48669085/148770760-b9ab6029-9005-4661-b0e6-6b31471d3c69.png" width="650px">
 
@@ -153,13 +151,15 @@
 - sqlite 3.0
 ```
 
-### 6. ER-D
+
+
+## 6. ER-D
 
 ![image](https://images.velog.io/images/earthkingman/post/d519d304-8cfe-40fd-8ae9-9c3c1418d336/image.png)
 
 
 
-### 7. 디렉토리 구조
+## 7. 디렉토리 구조
 
 ```bash
 ├── Makefile
@@ -205,7 +205,7 @@
 
 
 
-### 8. 서비스 구조
+## 8. 서비스 구조
 
 
 
@@ -213,70 +213,258 @@
 
 
 
-### 9. API 명세 및 테스트 방법
+## 9. API 명세 및 테스트 방법
 
 [API 명세서](https://documenter.getpostman.com/view/10344809/UVXgKwvV)
 
+- 상단의 API 명세서를 누르시고 그림 오른쪽 상단에 있는 Run in Postman을 클릭해주세요
+
 <img src="https://user-images.githubusercontent.com/48669085/148824271-7f1f1e09-c187-46bf-a8e0-b22545c35b84.png"  width="650px">
+
+- My Workspace에 추가해주세요
 
 <img src="https://user-images.githubusercontent.com/48669085/148824240-7eaf5551-4dcd-4e5d-8cae-a3f21ac10cc8.png"  width="650px">
 
+- Postman for Mac을 클릭해주세요.
+
 <img src="https://user-images.githubusercontent.com/48669085/148824255-9fe1222b-59ff-4489-a59a-f1ac5f2289a7.png"  width="650px">
 
-### 10. API 설명
+- 편의를 위해 만료기간이 없는 토큰들을 적용해놓았습니다. 
+
+![image-20220112002237872](/Users/ji-park/Library/Application Support/typora-user-images/image-20220112002237872.png)
 
 
-### 11. 도전했지만 완벽하게 해결하지 못한 부분
 
-#### 거래내역이 1억건을 넘어서는 경우 어떻게하면 조회를 빨리 할 수 있을까?
+## 10. API 설명
 
-- 문제
+### (로그인) POST /users/login 
 
-  거래내역 1억건이 넘어서면 수 많은 문제들이 생깁니다. 수 많은 문제 중 조회에 초점을 두었습니다.
+- Body
 
-  조회는 거래내역이 1억건을 넘어선다면 속도가 매우 느려집니다.
+  `email` 과 `password` 는 필수입니다.
 
-- 목표
-
-  조회 속도를 개선해야합니다.
-
-- 해결
-
-  멀티 컬럼 인덱스를 생성했습니다.
-
-  인덱싱을 생성하니 조회가 조금 개선되었습니다.
-
-  ```python
-  class Transaction(models.Model):
-      account = models.ForeignKey(Account, null=False, on_delete=models.CASCADE)
-      balance = models.PositiveBigIntegerField(null=False, validators=[validate_balance])
-      amount = models.PositiveBigIntegerField(null=False, validators=[validate_amount])
-      t_type = models.CharField(max_length=2, null=False,validators=[validate_type])
-      description = models.CharField(max_length=50, null=False)
-      created_at = models.DateTimeField(auto_now_add=True)
+  ``` 
+  {
+      "email":[이메일], 
+      "password":[비밀번호] 
+  }
   
-      class Meta:
-          db_table = 'transaction_index_history'
-          indexes = [
-              models.Index(fields=['account_id', 't_type']),
-              models.Index(fields=['account_id', 'created_at']),
-          ]
-  
+  예시)
+  {
+      "email":"test1@8Percent.com",
+      "password":"123"
+  }
   ```
 
-  인덱스를 생성하고 성능을 테스트해봤습니다.
+  
 
-  **데이터 약 오백만 개**
+### (회원가입) POST /users/signup 
 
-| 검색 조건   | 인덱싱 전 속도 | 인덱싱 후 속도 |
-| ----------- | -------------- | -------------- |
-| 기본        | 1070ms         | 212ms          |
-| 날짜로 검색 | 1965ms         | 715ms          |
-| 입출금 검색 | 1070ms         | 203ms          |
+- Body
 
-테스트 결과 내용은 [상세보기](https://velog.io/@earthkingman/20211230%EC%9D%B8%EB%8D%B1%EC%8B%B1-%EB%A7%A4%EA%B8%B0%EA%B8%B0-wuu1y4ik) 를 참고해주세요
+  `email` 과 `password` 는 필수입니다.
+
+  ``` 
+  {
+      "email":[이메일],
+      "password":[비밀번호]
+  }
+  
+  예시)
+  {
+      "email":"test1@8Percent.com",
+      "password":"123"
+  }
+  ```
+
+  
+
+###  (계좌 조회) GET accounts/account
+
+- Headers
+
+  `Authorization` 은 필수입니다.
+
+  ``` 
+  Authorization : [발급받은 토큰]
+  
+  예시)
+  Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
+  ```
+
+- Query Parameters
+
+  `account_number`  필수입니다.
+
+  ``` 
+  ?account_number=[계좌 번호]
+  
+  예시)
+  http://13.209.65.161/accounts/account?account_number=계좌번호1004
+  ```
 
 
+
+### (계좌 생성) POST accounts/account
+
+- Header
+
+  `Authorization` 은 필수입니다.
+
+  ``` 
+  Authorization : [발급받은 토큰]
+  
+  예시)
+  Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
+  ```
+
+- `account_number` 과 `amount` 는 필수입니다.
+
+   `amount` 는 0보다 커야합니다.
+
+  ``` 
+  {
+      "account_number":[계좌 번호],
+      "amount":[금액]
+  }
+  
+  예시)
+  {
+      "account_number":"계좌번호1007",
+      "amount":1000
+  }
+  ```
+
+  
+
+### (입금) POST transaction/deposit
+
+- Header
+
+  `Authorization` 은 필수입니다.
+
+  ``` 
+  Authorization : [발급받은 토큰]
+  
+  ex)
+  Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
+  ```
+
+- Body
+
+  `account_number` , `amount`, `description`는 필수입니다.
+
+   `amount` 는 0보다 커야합니다.
+
+  ``` 
+  {
+      "account_number":[계좌 번호],
+      "amount":[금액],
+   	  "description": [적요]
+  }
+  
+  예시)
+  {
+      "account_number":"계좌번호1004",
+      "amount":100,
+      "description": "월급"
+  }
+  ```
+
+
+
+### (출금) POST transaction/withdraw
+
+- Header
+
+  `Authorization` 은 필수입니다.
+
+  ``` 
+  Authorization : [발급받은 토큰]
+  
+  예시)
+  Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
+  ```
+
+- Body
+
+  `account_number` , `amount`, `description`는 필수입니다.
+
+   `amount` 는 0보다 커야합니다.
+
+  ``` 
+  {
+      "account_number":[계좌 번호],
+      "amount":[금액],
+   	  "description": [적요]
+  }
+  
+  예시)
+  {
+      "account_number":[계좌 번호],
+      "amount":[금액],
+   	  "description": [적요]
+  }
+  ```
+
+
+
+### (거래 내역 조회) GET ransaction/list
+
+- Header
+
+  `Authorization` 은 필수입니다.
+
+  ``` 
+  Authorization : [발급받은 토큰]
+  
+  예시)
+  Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
+  ```
+
+- Query Parameter (일반조회)
+
+  ``` 
+  ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]
+  
+  예시)
+  http://13.209.65.161/transaction/list?account_number=계좌번호1234&limit=0&offset=10
+  ```
+
+- Query Parameter (입출금, 날짜 조회)
+
+  ``` 
+  ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&started_at=[시작 날짜]&end_at=[종료 날짜]&transaction_type=[거래 종류]
+  
+  예시)
+  http://13.209.65.161/transaction/list?account_number=계좌번호1234&limit=0&offset=10&started_at=2022-01-10&end_at=2022-01-12&transaction_type=출금
+  
+  http://13.209.65.161/transaction/list?account_number=계좌번호1234&limit=0&offset=10&started_at=2022-01-10&end_at=2022-01-12&transaction_type=입금
+  ```
+
+- Query Parameter (입출금 조회)
+
+  ``` 
+  ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&transaction_type=[거래 종류]
+  
+  예시)
+  http://13.209.65.161/transaction/list?account_number=계좌번호1234&limit=0&offset=10&transaction_type=출금
+  
+  http://13.209.65.161/transaction/list?account_number=계좌번호1234&limit=0&offset=10&transaction_type=입금
+  ```
+
+- Query Parameter (날짜 조회)
+
+  ``` 
+  ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&started_at=[시작 날짜]&end_at=[종료 날짜]
+  
+  예시)
+  http://13.209.65.161/transaction/list?account_number=계좌번호1004&limit=10&offset=0&started_at=2022-01-10&end_at=2022-01-12
+  ```
+
+## 
+
+## 11. 도전했지만 완벽하게 해결하지 못한 부분
 
 #### 동시성 문제 해결
 
@@ -290,9 +478,9 @@
 
   ![](https://images.velog.io/images/earthkingman/post/92383ca7-2236-4471-a24f-14946fe1916f/image.png)
 
-  #### 도전
+  #### 방법 1. 트랜잭션을 사용한 직렬화
 
-		계좌 1004번은 10000원을 가지고 있습니다.
+  계좌 1004번은 10000원을 가지고 있습니다.
 
 - 출금 코드 
 
@@ -313,23 +501,29 @@
 
 ![](https://images.velog.io/images/earthkingman/post/e3493183-9176-48e4-b128-7f0122a8ff3c/image.png)
 
+
+
 계좌 1004번에 입금과 출금을 100원을  동시에 10000번 요청했습니다.
+
+
 
 - 입금
 
-```shell
-for ((i = 0; i < 10000; i++)); do
-curl --location --request POST 'http://localhost:8000/transaction/deposit' \
---header 'Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjQxNjI2OTQ4fQ.-wG1evB0gfzevQMhHBMI6DOztQIy8p3edCZ1gcYMayw' \
---header 'Content-Type: application/json' \
---header 'Cookie: Cookie_2=value; Cookie_3=value; access=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiaWF0IjoxNjI5OTEzMjI1LCJleHAiOjE2Mjk5MTY4MjV9.A2Q440G_ENfm8jrVBE1W8tNcqSNUnkYa2FJEq3TPOfU' \
---data-raw '{
-    "account_number":"계좌번호1004",
-    "amount":"100",
-    "description": "월급"
-}'
-done
-```
+  ```sh
+  for ((i = 0; i < 10000; i++)); do
+  curl --location --request POST 'http://localhost:8000/transaction/deposit' \
+  --header 'Authorization: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwiZXhwIjoxNjQxNjI2OTQ4fQ.-wG1evB0gfzevQMhHBMI6DOztQIy8p3edCZ1gcYMayw' \
+  --header 'Content-Type: application/json' \
+  --header 'Cookie: Cookie_2=value; Cookie_3=value; access=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6OSwiaWF0IjoxNjI5OTEzMjI1LCJleHAiOjE2Mjk5MTY4MjV9.A2Q440G_ENfm8jrVBE1W8tNcqSNUnkYa2FJEq3TPOfU' \
+  --data-raw '{
+      "account_number":"계좌번호1004",
+      "amount":"100",
+      "description": "월급"
+  }'
+  done
+  ```
+
+  
 
 - 출금
 
@@ -359,13 +553,29 @@ done
 
 - 두번째 결과
 
-  서버 내부 에러가 발생하지 않았습니다.
+  서버 내부 에러가 발생하지 않았습니다. 
 
   9500원
 
   ![](https://images.velog.io/images/earthkingman/post/3ad2743c-a10c-4159-95e0-6a3e0236e87d/image.png)
 
-#### select_for_update을 사용해 락을 거는 방법
+- 결론
+
+  ![](https://images.velog.io/images/earthkingman/post/4385f7dc-501c-4a05-9367-aae975128fca/image.png)
+
+  sqlite의 격리수준은 Serializable로 가장 높은 격리수준을 가지고 있습니다. 
+
+  저는 한 트랜잭션에서 사용되는 자원들이 처리가 되고 있을 경우 데이터베이스에서 지정한 격리수준에 맞게
+
+  다른 트랜잭션들이 접근하면 처리가 끝날 때까지 대기시키는 것으로 알고 있었습니다.
+
+  근데 실제로 실행해보니 데이터 동기화가 제대로 이루어지지 않아서 500원이라는 손해를 보게 되었습니다. 
+
+  동시성 문제를 해결하지 못했습니다.
+
+  
+
+#### 방법 2. select_for_update을 사용해 락을 거는 방법
 
 ![](https://images.velog.io/images/earthkingman/post/d3c0bb3d-c7b9-4cb6-864b-41c0e20bacfb/image.png)
 
@@ -423,9 +633,7 @@ done
 
 ![](https://images.velog.io/images/earthkingman/post/c979a516-f69e-4604-a0a2-af69a8b14114/image.png)
 
-
-
-#### 결과
+- 결론
 
 ![](https://images.velog.io/images/earthkingman/post/56d9fd71-944a-4dce-8e41-6fba83742203/image.png)
 
@@ -433,7 +641,256 @@ done
 
 기존과 달라진 부분은 데이터베이스에 락이 걸려 요청이 실패된다면 클라이언트가 알 수 있게 되었습니다.
 
+---
 
+
+
+#### 거래내역이 1억건을 넘어서는 경우 어떻게하면 조회를 빨리 할 수 있을까?
+
+- 문제
+
+  거래내역 1억건이 넘어서면 수 많은 문제들이 생깁니다. 수 많은 문제 중 조회에 초점을 두었습니다.
+
+  조회는 거래내역이 1억건을 넘어선다면 속도가 매우 느려집니다.
+
+- 목표
+
+  인덱스를 생성해서 조회 속도를 개선해야합니다. 인덱스의 구조를 파악하고, 왜 빨라지는지 어떻게 빨라지는지 확인합니다.
+
+- 해결
+
+  테이블을 생성해보겠습니다.
+
+  - Account(계좌), Users(사용자), Transaction(거래내역) 테이블 생성
+
+    sqlite는  기본 키(primary key)나 유일 키(unique) 제약 조건을 지정하면 자동으로 인덱스가 생성됩니다. 
+
+    그래서 Datagrip으로 생성된 인덱스들을 확인 했습니다.
+
+    - Account 테이블에서는 account_number(유니크 키), user_id (외래키),  
+
+    - Transaction 테이블에서는 account_id(외래키)
+
+    - User 테이블에서는 email(유니크키)
+
+    생성해서 얻는 이득은 참조 키를 빠르게 확인하고 테이블 스캔을 하지 않을 수 있습니다.
+
+    
+
+  ![](https://images.velog.io/images/earthkingman/post/88577f81-040a-45f2-a477-8bc0ab051a80/image.png)
+
+  
+
+  ![](https://images.velog.io/images/earthkingman/post/ba91e1d6-1253-43b9-a412-d3012492fe69/image.png)
+
+  ​	서버에서 실제로 호출하는 Query 입니다. 
+
+  ​	실행계획을 통해 이 쿼리들이 인덱스를 타는지 확인해보았습니다.
+
+  - 조회하기 
+
+    ```sql
+    SELECT * FROM "transaction_transaction" 
+    WHERE "transaction_transaction"."account_id" = 1 
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    ```
+
+    ![](https://images.velog.io/images/earthkingman/post/c928772c-f97e-443f-91c8-7565b73aa6c8/image.png)
+
+  - 날짜로 조회하기 
+
+    ```sql
+    SELECT *
+    WHERE ("transaction_transaction"."account_id" = 1
+    AND "transaction_transaction"."created_at" >= '2022-01-10 00:00:00' 
+    AND "transaction_transaction"."created_at" <= '2022-01-12 00:00:00' ) 
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    ```
+
+    ![](https://images.velog.io/images/earthkingman/post/5a59ec80-6611-4c62-bdf4-2b2f8e3d0107/image.png)
+
+  - 입출금 구분으로 조회하기  
+
+    ```sqlite
+    SELECT * FROM "transaction_transaction" 
+    WHERE ("transaction_transaction"."account_id" = 1
+    AND "transaction_transaction"."transaction_type" = 출금)
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    ```
+
+    ![](https://images.velog.io/images/earthkingman/post/607957d6-b8ea-4423-b628-592782f58c59/image.png)
+
+    
+
+  - 결과(데이터 약 100만개)
+
+    | 검색 조건        | 자동으로 생성된 인덱스 사용 | 자동으로 생성된 인덱스 지워보기 |
+    | ---------------- | --------------------------- | ------------------------------- |
+    | 기본             | 66ms (인덱스 탔음)          | 103ms (인덱스 안탐)             |
+    | 날짜로 검색      | 426ms (인덱스 탔음)         | 399ms  (인덱스 안탐)            |
+    | 입출금 검색      | 254ms (인덱스 탔음)         | 231ms  (인덱스 안탐)            |
+    | 날짜 입출금 검색 | 560ms (인덱스 탔음)         | 526ms  (인덱스 안탐)            |
+
+    기본 검색만 속도가 빨라지고 오히려 나머지는 속도가 느려졌습니다. 이유를 정확하게 파악하지는 못했습니다.
+
+    제 추측은 인덱스를 찾아가는 검색 조건이 아니라 (인덱스 값이 날짜, 입출금 종류) 조건에 맞는지 여부를 검증하는 체크조건이 되기 때문에 속도가 오히려 줄어든것 같습니다.
+
+    
+
+  - 인덱스를 사용하는 이유
+
+    메모리 내에서 원하는 데이터가 저장되니 주소를 조회할 수 있고, 마지막에 디스크를 접근하면 되기 때문에 인덱싱을 사용하면 속도가 개선됩니다. 즉 disk I/O를 줄여서 속도를 개선하는 것입니다. 
+
+    - 멀티컬럼 인덱스 사용
+
+      하나 이상의 키 칼럼 조건으로 같은 집합의 컬럼들이 자주 조회된다면 이러한 칼럼을 모두 포함하는 인덱스를 구성할 수 있습니다. 
+
+      제 서비스는(계좌번호, 날짜), (계좌번호, 입출금)으로 조회하기 때문에 멀티컬럼 인덱스가 적합합니다. 
+
+      인덱스 컬럼 순서에 맞춰 조회 순서를 지키는 편이 좋습니다. 만약에 맞추지 않는다면 옵티마이저가 조회 조건의 컬럼을 인덱스 컬럼 순서에 맞춰 재배열하기 때문입니다. 
+
+    
+
+    - 인덱스의 구조
+
+      B-Tree(Balanced Tree)의 구조를 가지고 있고, 인덱스로 지정한 값들은 오름차순으로 정렬되어 있습니다.
+
+      
+
+    - 인덱스를 타게하는 방법
+
+      Where절에 만들어 놓은 인덱스가 존재하면  인덱스를 타게 할 수 있습니다. 
+
+      ```
+      SELECT *
+      FROM "transaction_transaction";
+      ```
+
+      ![](https://images.velog.io/images/earthkingman/post/387dfbb1-1e22-45d1-b4ef-a2e8b30aab52/image.png)
+
+      ```sql
+      SELECT *
+      FROM "transaction_transaction"
+      WHERE ("transaction_transaction"."account_id" = 7
+      AND "transaction_transaction"."transaction_type" = '출금')
+      ORDER BY "transaction_transaction"."id" ASC LIMIT 10;
+      ```
+
+      ![](https://images.velog.io/images/earthkingman/post/607957d6-b8ea-4423-b628-592782f58c59/image.png)
+
+    ​		그리고 조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
+
+    ![](https://images.velog.io/images/earthkingman/post/facdb5a3-6c0f-473b-a948-377f8046f7e8/image.png)
+
+    ```sql
+    SELECT *
+    FROM "transaction_history"
+    WHERE ("transaction_history"."account_id" = 7 )
+    ORDER BY "transaction_history"."id" ASC LIMIT 10;
+    ```
+
+    ![image-20220112040224831](/Users/ji-park/Library/Application Support/typora-user-images/image-20220112040224831.png)
+
+    
+
+    - 인덱스를 생성하는 기준
+
+      중복된 수치를 나타내는 카디널리티가 가장 높은것을 선택해야합니다. 이유는 해당 인덱스로 많은 부분을 걸러내야 하기 때문입니다.
+
+      중복된 수치가 높으면 카디널리티가 낮고 중복된 수치가 낮으면 카디널리티가 높습니다.
+
+      
+
+    - 인덱스 생성하기
+
+      모델 자체에 대한 데이터를 추가해야하는 경우 Meta 클래스를 사용합니다. 
+
+      인덱스는 하나의 컬럼으로 작성할 수도 있고, 여러개의 컬럼을 사용해서 멀티 컬럼 인덱스를 만들 수도 있습니다.
+
+      저는 조회에 필요한 'account_id', 'transaction_type', 'created_at' 컬럼을 인덱스로 생성했습니다.
+
+      하지만 주의해야할 것이있습니다. 카디널리티는 높은순에서 낮은순으로 나열해야 합니다.
+
+      - 카디널리티가 높은순에서 낮은순  `created_at, account_id, transaction_type`
+
+      ```python
+       class Meta:
+              db_table = 'transaction_history'
+              indexes = [
+                  models.Index(
+                      fields=['created_at', 'account_id', 'transaction_type']),
+              ]
+      ```
+
+      
+
+      - 카디널리티가 낮은순에서 높은순 `transaction_type, account_id, created_at, `
+
+      ```python
+       class Meta:
+              db_table = 'transaction_history'
+              indexes = [
+                  models.Index(
+                      fields=['transaction_type', 'account_id', 'created_at']),
+              ]
+      ```
+
+      - 결과(데이터 약 100만개)
+
+         조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
+
+        | 검색 조건        | 높은순에서 낮은순 (날짜->계좌->종류)            | 낮은순에서 높은순 (종류->계좌->날짜)            |
+        | ---------------- | ----------------------------------------------- | ----------------------------------------------- |
+        | 기본             | 92ms(인덱스 안탐)                               | 93ms  (인덱스 안탐)                             |
+        | 날짜로 검색      | 239ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY | 402ms (인덱스 안탐)                             |
+        | 입출금 검색      | 220ms (인덱스 안탐)                             | 135ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
+        | 날짜 입출금 검색 | 478ms (인덱스 탐) USE TEMP B-TREE FOR ORDER BY  | 150ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
+
+        ![](https://images.velog.io/images/earthkingman/post/cc491452-735c-4ed3-a5f0-fe3a55544945/image.png)
+
+        
+
+    - 주의해야하는 점
+
+      
+
+    - 결론
+
+      ```python
+      class Transaction(models.Model):
+          account = models.ForeignKey(Account, null=False, on_delete=models.CASCADE)
+          balance = models.PositiveBigIntegerField(null=False, validators=[validate_balance])
+          amount = models.PositiveBigIntegerField(null=False, validators=[validate_amount])
+          t_type = models.CharField(max_length=2, null=False,validators=[validate_type])
+          description = models.CharField(max_length=50, null=False)
+          created_at = models.DateTimeField(auto_now_add=True)
+      
+          class Meta:
+              db_table = 'transaction_index_history'
+              indexes = [
+                  models.Index(fields=['account_id', 't_type']),
+                  models.Index(fields=['account_id', 'created_at']),
+              ]
+      
+      ```
+
+      
+
+    - 인덱스를 생성하고 성능을 테스트해봤습니다.
+
+      - **데이터 약 오백만 개**
+
+      | 검색 조건   | 인덱싱 전 속도 | 인덱싱 후 속도 |
+      | ----------- | -------------- | -------------- |
+      | 기본        | 1070ms         | 212ms          |
+      | 날짜로 검색 | 1965ms         | 715ms          |
+      | 입출금 검색 | 1070ms         | 203ms          |
+
+      
+
+  테스트 결과 내용은 [상세보기](https://velog.io/@earthkingman/20211230%EC%9D%B8%EB%8D%B1%EC%8B%B1-%EB%A7%A4%EA%B8%B0%EA%B8%B0-wuu1y4ik) 를 참고해주세요
+
+실행계획을 알아보고 같이 진행했다면 더욱 같은 쿼리를 두번 날리게 되면 두번째 쿼리가 훨씬 빠릅니다. 이미 데이터가 캐싱되어있기 때문입니다.
 
 ### 11. 테스트
 
