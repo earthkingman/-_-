@@ -258,6 +258,8 @@
 
   
 
+
+
 ### (회원가입) POST /users/signup 
 
 - Body
@@ -318,7 +320,9 @@
   Authorization : eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MX0.wYWgGA_2Tn-aTiD8UoQFPpT0paJr-1KT-xMUqSQU7qg
   ```
 
-- `account_number` 과 `amount` 는 필수입니다.
+- Body
+
+  `account_number` 과 `amount` 는 필수입니다.
 
    `amount` 는 0보다 커야합니다.
 
@@ -424,6 +428,12 @@
 
 - Query Parameter (일반조회)
 
+  `account_number, ` 계좌번호는 필수입니다.
+
+  `limit` 필수가 아니고 보내지 않는다면 10이 기본값입니다.
+
+  `offset` 필수가 아니고 보내지 않는다면 0이 기본값입니다. 
+
   ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]
   
@@ -432,6 +442,10 @@
   ```
 
 - Query Parameter (입출금, 날짜 조회)
+
+  `started_at` ,`end_at` 필수입니다. 양식은 [YYYY-MM-DD]입니다.
+
+  `transaction_type` 필수입니다. `입금`, `출금`을 선택하시면 됩니다.
 
   ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&started_at=[시작 날짜]&end_at=[종료 날짜]&transaction_type=[거래 종류]
@@ -731,9 +745,11 @@
     | 입출금 검색      | 254ms (인덱스 탔음 account_id) | 231ms  (인덱스 안탐)            |
     | 날짜 입출금 검색 | 560ms (인덱스 탔음 account_id) | 526ms  (인덱스 안탐)            |
 
+    단일 인덱스로는 해당 데이터에 바로 접근을 하지 못하는 경우들은 오히려 인덱스가 없는게 더 빨랐습니다.
+
     기본 검색만 속도가 빨라지고 오히려 나머지는 속도가 느려졌습니다. 
 
-    제 추측은 인덱스를 찾아가는 검색 조건이 아니라 정렬된  account_id 인덱스가 (날짜, 입출금 종류) 조건에 맞는지 여부를 검증하는 체크조건이 되기 때문에 속도가 오히려 줄어든것 같습니다.
+    이유는 단일 컬럼을 사용하는 경우에는 여러개의 컬럼을 Where절에서 사용한다면  바로 데이터가 접근하지 못합니다. 
 
     
 
@@ -745,15 +761,13 @@
 
       하나 이상의 키 칼럼 조건으로 같은 집합의 컬럼들이 자주 조회된다면 이러한 칼럼을 모두 포함하는 인덱스를 구성할 수 있습니다. 
 
-      제 서비스는(계좌번호, 날짜), (계좌번호, 입출금)으로 조회하기 때문에 멀티컬럼 인덱스가 적합합니다. 
-
-      인덱스 컬럼 순서에 맞춰 조회 순서를 지키는 편이 좋습니다. 만약에 맞추지 않는다면 옵티마이저가 조회 조건의 컬럼을 인덱스 컬럼 순서에 맞춰 재배열하기 때문입니다. 
+      제 서비스는(계좌번호, 날짜), (계좌번호, 입출금) 등등  다중 조건으로 조회하기 때문에 멀티 컬럼 인덱스가 적합합니다. 
 
     
 
     - 단일컬럼을 사용하지 않는 이유
 
-      단일 컬럼을 사용한다면 여러개의 컬럼을 Where절에서 사용한다면 사용하는 조회쿼리에 바로 데이터가 접근하지 못합니다.
+      단일 컬럼을 사용한다면 여러개의 컬럼을 Where절에서 사용한다면  바로 데이터가 접근하지 못합니다.
 
       인덱스만으로 데이터에 access할 수가 없습니다. 단일컬럼으로 테스트한 결과입니다. 
 
@@ -858,7 +872,7 @@
 
       - 결과(데이터 약 100만개)
 
-         조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
+        조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
 
         이상한 결과가 나왔습니다. 이론적으로는 높은순에서 낮은순이 속도가 더 빨라야하는데 날짜 입출금 검색은 결과가 반대입니다.
 
@@ -877,7 +891,7 @@
 
         ![](https://images.velog.io/images/earthkingman/post/cc491452-735c-4ed3-a5f0-fe3a55544945/image.png)
 
-        
+        USE TEMP B-TREE FOR ORDER BY의 의미를 파악하지 못했습니다.
 
     - 결론
 
@@ -898,7 +912,7 @@
                   models.Index(fields=['account_id', 'transaction_type','created_at']),#index1
                   models.Index(fields=['account_id', 'transaction_type']), #index2
                   models.Index(fields=['account_id', 'created_at']), #index3
-                  models.Index(fields=['account_id']) #index4
+                  models.Index(fields=['account_id']) #index4 
               ]
       
       ```
@@ -923,4 +937,8 @@
 총 45개의 테스트 코드를 작성했고 코드 커버리지는 98%입니다.
 
  <img src = "https://user-images.githubusercontent.com/48669085/148824915-d2b1adff-1db5-4043-a9af-79b18c640201.png" width="800px">
+
+
+
+
 
