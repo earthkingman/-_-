@@ -231,8 +231,7 @@
 
 - 편의를 위해 만료기간이 없는 토큰들을 적용해놓았습니다. 
 
-![image-20220112002237872](/Users/ji-park/Library/Application Support/typora-user-images/image-20220112002237872.png)
-
+<img src="https://user-images.githubusercontent.com/48669085/149080937-f9fef0ca-1221-4fbe-b86a-6098d5464863.png"  width="650px">
 
 
 ## 10. API 설명
