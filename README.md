@@ -215,7 +215,7 @@
 
 ## 9. API 명세 및 테스트 방법
 
-[API 명세서](https://documenter.getpostman.com/view/10344809/UVXgKwvV)
+[API 명세서](https://documenter.getpostman.com/view/10344809/UVXhob7X)
 
 - 상단의 API 명세서를 누르시고 그림 오른쪽 상단에 있는 Run in Postman을 클릭해주세요
 
