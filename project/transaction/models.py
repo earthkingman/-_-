@@ -13,12 +13,15 @@ class Transaction(models.Model):
         null=False, validators=[validate_amount])
     transaction_type = models.CharField(max_length=2, null=False,
                                         validators=[validate_t_type])
-    description = models.CharField(max_length=50, null=False)
+    description = models.CharField(max_length=20, null=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        db_table = 'transaction_history'
+        db_table = 'transaction_index_history'
         indexes = [
+            models.Index(
+                fields=['account_id', 'transaction_type', 'created_at']),
             models.Index(fields=['account_id', 'transaction_type']),
             models.Index(fields=['account_id', 'created_at']),
+            models.Index(fields=['account_id']),
         ]
