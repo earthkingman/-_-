@@ -28,10 +28,10 @@ class AccountView(View):
             # 계좌 생성
             account: Account = account_service.create_account(
                 user, account_number)
-
-            # 기본 금액 입금
-            transaction_service.deposit(
-                account_number, deposit_amount, DESCRIPTION)
+            if (deposit_amount > 0):
+                # 기본 금액 입금
+                transaction_service.deposit(
+                    account_number, deposit_amount, DESCRIPTION)
             return JsonResponse({'Message': 'SUCCESS'}, status=201)
 
         except AccountDuplicateError:
