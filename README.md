@@ -22,13 +22,13 @@
 
      ```shell
      $ virtualenv 8percent
+     $ cd 8percent
      $ source bin/activate
-     
      ## ~/8Percent/project
      pip install -r requirements.txt
      ```
 
-   - 설정 파일 생성
+   - 설정 파일 생성 ()
 
      ```shell
      ## ~/8Percent/project 
@@ -65,7 +65,7 @@
 
 - 문제 
 
-  계좌의 잔액을 별도로 관리할 수 있고, 계좌의 잔액과 거래내역의 잔액의 무결성을 보장할 수 있어야 합니다.
+  계좌의 잔액을 별도로 관리할 수 있고, 계좌의 잔액과 거래내역 잔액의 무결성을 보장할 수 있어야 합니다.
 
 - 해결 목표
 
@@ -122,6 +122,7 @@
 
 - 동시에 요청이 들어온다면 요청을 직렬화하지 못했습니다. 
 - 정상적으로 출금과 입금이 안되면 오류를 반환해 클라이언트에게 알려주기로 정했습니다. 
+- 데이터베이스를 mysql로 변경해 정확한 금액을 얻을 수 있었습니다. (추가)
 
 ## 4. 구현 사항
 
@@ -215,7 +216,7 @@
 
 ## 9. API 명세 및 테스트 방법
 
-[API 명세서](https://documenter.getpostman.com/view/10344809/UVXhob7X)
+[API 명세서](https://documenter.getpostman.com/view/10344809/UVXgKwvV)
 
 - 상단의 API 명세서를 누르시고 그림 오른쪽 상단에 있는 Run in Postman을 클릭해주세요
 
@@ -231,7 +232,8 @@
 
 - 편의를 위해 만료기간이 없는 토큰들을 적용해놓았습니다. 
 
-<img src="https://user-images.githubusercontent.com/48669085/149080937-f9fef0ca-1221-4fbe-b86a-6098d5464863.png"  width="650px">
+![image-20220112002237872](/Users/ji-park/Library/Application Support/typora-user-images/image-20220112002237872.png)
+
 
 
 ## 10. API 설명
@@ -242,7 +244,7 @@
 
   `email` 과 `password` 는 필수입니다.
 
-  ``` 
+  ``` 
   {
       "email":[이메일], 
       "password":[비밀번호] 
@@ -265,7 +267,7 @@
 
   `email` 과 `password` 는 필수입니다.
 
-  ``` 
+  ``` 
   {
       "email":[이메일],
       "password":[비밀번호]
@@ -286,7 +288,7 @@
 
   `Authorization` 은 필수입니다.
 
-  ``` 
+  ``` 
   Authorization : [발급받은 토큰]
   
   예시)
@@ -297,7 +299,7 @@
 
   `account_number`  필수입니다.
 
-  ``` 
+  ``` 
   ?account_number=[계좌 번호]
   
   예시)
@@ -312,7 +314,7 @@
 
   `Authorization` 은 필수입니다.
 
-  ``` 
+  ``` 
   Authorization : [발급받은 토큰]
   
   예시)
@@ -325,7 +327,7 @@
 
    `amount` 는 0보다 커야합니다.
 
-  ``` 
+  ``` 
   {
       "account_number":[계좌 번호],
       "amount":[금액]
@@ -346,7 +348,7 @@
 
   `Authorization` 은 필수입니다.
 
-  ``` 
+  ``` 
   Authorization : [발급받은 토큰]
   
   ex)
@@ -359,7 +361,7 @@
 
    `amount` 는 0보다 커야합니다.
 
-  ``` 
+  ``` 
   {
       "account_number":[계좌 번호],
       "amount":[금액],
@@ -382,7 +384,7 @@
 
   `Authorization` 은 필수입니다.
 
-  ``` 
+  ``` 
   Authorization : [발급받은 토큰]
   
   예시)
@@ -395,7 +397,7 @@
 
    `amount` 는 0보다 커야합니다.
 
-  ``` 
+  ``` 
   {
       "account_number":[계좌 번호],
       "amount":[금액],
@@ -418,7 +420,7 @@
 
   `Authorization` 은 필수입니다.
 
-  ``` 
+  ``` 
   Authorization : [발급받은 토큰]
   
   예시)
@@ -433,7 +435,7 @@
 
   `offset` 필수가 아니고 보내지 않는다면 0이 기본값입니다. 
 
-  ``` 
+  ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]
   
   예시)
@@ -446,7 +448,7 @@
 
   `transaction_type` 필수입니다. `입금`, `출금`을 선택하시면 됩니다.
 
-  ``` 
+  ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&started_at=[시작 날짜]&end_at=[종료 날짜]&transaction_type=[거래 종류]
   
   예시)
@@ -457,7 +459,7 @@
 
 - Query Parameter (입출금 조회)
 
-  ``` 
+  ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&transaction_type=[거래 종류]
   
   예시)
@@ -468,14 +470,14 @@
 
 - Query Parameter (날짜 조회)
 
-  ``` 
+  ``` 
   ?account_number=[계좌 번호]&limit=[최대 범위]&offset=[시작 인덱스]&started_at=[시작 날짜]&end_at=[종료 날짜]
   
   예시)
   http://13.209.65.161/transaction/list?account_number=계좌번호1004&limit=10&offset=0&started_at=2022-01-10&end_at=2022-01-12
   ```
 
-## 
+
 
 ## 11. 도전했지만 완벽하게 해결하지 못한 부분
 
@@ -498,9 +500,9 @@
 - 출금 코드 
 
 ```python
-    # 출금 (트랜잭션)
     @transaction.atomic
-    def withdraw(self, account, amount, description):
+    def withdraw(self, account_number, amount, description):
+        account = Account.objects.get(account_number=account_number)
         # 계좌 잔액 수정
         account.balance = account.balance - amount
         account.save()
@@ -509,7 +511,6 @@
             amount, description, account, WITHDRAW)  # 거래 내역 생성
 
         return transaction_history
-
 ```
 
 ![](https://images.velog.io/images/earthkingman/post/e3493183-9176-48e4-b128-7f0122a8ff3c/image.png)
@@ -590,6 +591,8 @@
 
 #### 방법 2. select_for_update을 사용해 락을 거는 방법
 
+row lock을 제어하는 방식으로 DBMS 전체나 table에 lock을 거는 것보다 좁은 범위에 lock을 사용하여 성능 하향을 최소화
+
 ![](https://images.velog.io/images/earthkingman/post/d3c0bb3d-c7b9-4cb6-864b-41c0e20bacfb/image.png)
 
 - 변경한 출금 코드
@@ -654,9 +657,69 @@
 
 기존과 달라진 부분은 데이터베이스에 락이 걸려 요청이 실패된다면 클라이언트가 알 수 있게 되었습니다.
 
+
+
+#### 방법 3. 데이터 베이스를 변경
+
+기존의 코드와 환경은 동일합니다. 
+
+sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되었고, mysql로 데이터베이스를 변경해보았습니다.
+
+계좌번호1에 기본금 1000원이 있습니다.
+
+입금 출금을 동시에 100원씩 1000번  진행했고, 에러메세지는 발생하지 않았습니다.
+
+![image-20220115142724001](/Users/ji-park/Library/Application Support/typora-user-images/image-20220115142724001.png)
+
+
+
+- 결과
+
+  문제 목표와 같이 동시 접근을 막고 하나의 트랜잭션만 작동합니다. 그리고 나머지는 순차적으로 대기합니다.
+
+  거래내역의 잔액과 계좌의 잔액은 오차가 생기지 않고 정확합니다.
+
+  - 거래내역
+
+    <img src="https://images.velog.io/images/earthkingman/post/3e82dc9a-40ce-4453-9e9b-34bca1c5ff7d/image.png" width="500px">
+
+  - 잔액
+
+<img src="https://images.velog.io/images/earthkingman/post/ee8fa856-d79b-45e2-8d6b-99501c0ad229/image.png" width="500px">
+
+
+
+#### 방법 4. Mysql을 사용하고 락을 사용하지 않고 격리수준을 변경해보기
+
+10000원에 100원씩 입출금을 동시에 여러번 진행했습니다.
+
+- REPEATABLE-READ
+
+  ![](https://images.velog.io/images/earthkingman/post/54923a6f-c0cf-47af-ad38-6bce8a0944ac/image.png)
+
+- SERIALIZABLE
+
+  - 격리 수준 확인과 변경 방법
+
+  ```sql
+  SET SESSION TRANSACTION ISOLATION LEVEL SERIALIZABLE
+  
+  SELECT @@SESSION.transaction_isolation
+  ```
+
+  ![](https://images.velog.io/images/earthkingman/post/e2cbcfa2-b146-4dbc-b141-401188885447/image.png)
+
+동시에 접근해 읽는 경우가 생겨 오차가 생겼습니다.
+
+![](https://images.velog.io/images/earthkingman/post/3eeeebd1-6a61-4bec-8cba-1df1dcec6f2d/image.png)
+
+- 의문점
+
+  데이터베이스의 격리수준은 아무런 효과가 없는것인가??
+
+
+
 ---
-
-
 
 #### 거래내역이 1억건을 넘어서는 경우 어떻게하면 조회를 빨리 할 수 있을까?
 
@@ -696,9 +759,9 @@
 
   ![](https://images.velog.io/images/earthkingman/post/ba91e1d6-1253-43b9-a412-d3012492fe69/image.png)
 
-  ​	서버에서 실제로 호출하는 Query 입니다. 
+  서버에서 실제로 호출하는 Query 입니다. 
 
-  ​	실행계획을 통해 이 쿼리들이 인덱스를 타는지 확인해보았습니다.
+  실행계획을 통해 이 쿼리들이 인덱스를 타는지 확인해보았습니다.
 
   - 조회하기 
 
@@ -746,151 +809,127 @@
 
     단일 인덱스로는 해당 데이터에 바로 접근을 하지 못하는 경우들은 오히려 인덱스가 없는게 더 빨랐습니다.
 
-    기본 검색만 속도가 빨라지고 오히려 나머지는 속도가 느려졌습니다. 
+    
 
-    이유는 단일 컬럼을 사용하는 경우에는 여러개의 컬럼을 Where절에서 사용한다면  바로 데이터가 접근하지 못합니다. 
+  - 기본 검색은 왜 빨라진걸까?
+
+    단일 인덱스 (account_id)로 바로 데이터에 접근할 수 있기 때문입니다.
+
+    그리고 인덱스 테이블은 항상 정렬되어 있습니다. 
+
+    ![](https://images.velog.io/images/earthkingman/post/11c6c55e-be1f-482e-aeca-e3eb02a72f7b/image.png)
 
     
 
-  - 인덱스를 사용하는 이유
+  - 그럼 다른 검색들은 왜 인덱스를 사용했는데 속도가 느려지는걸까?
 
-    메모리 내에서 원하는 데이터가 저장되니 주소를 조회할 수 있고, 마지막에 디스크를 접근하면 되기 때문에 인덱싱을 사용하면 속도가 개선됩니다. 즉 disk I/O를 줄여서 속도를 개선하는 것입니다. 
+    이유는 단일 컬럼을 사용하는 경우에는 여러개의 컬럼을 Where절에서 사용한다면  데이터가 바로 접근하지 못합니다. 
 
-    - 멀티컬럼 인덱스 사용
-
-      하나 이상의 키 칼럼 조건으로 같은 집합의 컬럼들이 자주 조회된다면 이러한 칼럼을 모두 포함하는 인덱스를 구성할 수 있습니다. 
-
-      제 서비스는(계좌번호, 날짜), (계좌번호, 입출금) 등등  다중 조건으로 조회하기 때문에 멀티 컬럼 인덱스가 적합합니다. 
+    결국 여러번 디스크에 엑세스를 해야하는 문제가 생깁니다. 
 
     
 
-    - 단일컬럼을 사용하지 않는 이유
+  - 인덱스를 타는 기준이 뭘까? 
 
-      단일 컬럼을 사용한다면 여러개의 컬럼을 Where절에서 사용한다면  바로 데이터가 접근하지 못합니다.
+    Where 조건에 인덱스 컬럼이 있다면  인덱스를 타게 됩니다.
 
-      인덱스만으로 데이터에 access할 수가 없습니다. 단일컬럼으로 테스트한 결과입니다. 
+    
 
-      Where 조건중 index 하나만 탑니다.
+  - 여러개의 인덱스 중 어떤 것을 선정하고 어떤 기준으로 선정하는걸까?
 
-      이 결과로 단일컬럼 인덱스가 있는 경우에는 where절의 가장 앞에 있는 조건을 우선으로 인덱스를 정한다는 추측을 하였으나 테스트를 진행해보니 틀렸었습니다. 
+    단일컬럼으로 테스트한 결과입니다
 
-      옵티마이저가 최적의 엑세스 경로를 찾아준다고 하는데 힌트를 사용하면 사용자가 직접 최적의 튜닝이 가능합니다.
+    | 검색 조건        | 단일컬럼 인덱스3개  (create_ad),(account_id), (transaction) |
+    | ---------------- | ----------------------------------------------------------- |
+    | 기본             | 66ms (account_id 인덱스 탔음)                               |
+    | 날짜로 검색      | 426ms (account_id 인덱스 탔음)                              |
+    | 입출금 검색      | 254ms (account_id 인덱스 탔음)                              |
+    | 날짜 입출금 검색 | 558ms  (account_id인덱스 탔음)                              |
 
-      | 검색 조건        | 단일컬럼 인덱스3개  (create_ad),(account_id), (transaction) |
-      | ---------------- | ----------------------------------------------------------- |
-      | 기본             | 66ms (account_id 인덱스 탔음)                               |
-      | 날짜로 검색      | 426ms (account_id 인덱스 탔음)                              |
-      | 입출금 검색      | 254ms (account_id 인덱스 탔음)                              |
-      | 날짜 입출금 검색 | 558ms  (account_id인덱스 탔음)                              |
+    단일컬럼 인덱스가 있는 경우에는 where절의 가장 앞에 있는 조건을 우선으로 인덱스를 정한다는 추측을 하였으나
 
-      
+    테스트를 진행해보니 틀렸었습니다.  
 
-    - 인덱스를 타게하는 방법
+    옵티마이저가 최적의 엑세스 경로를 찾아준다고 하는데 힌트를 사용하면 사용자가 직접 최적의 튜닝이 가능합니다.
 
-      Where절에 만들어 놓은 인덱스가 존재하면  인덱스를 타게 할 수 있습니다. 
+    
 
-      ```
-      SELECT *
-      FROM "transaction_transaction";
-      ```
+  - 그럼 내 서비스는 어떻게 해야 조회속도를 높힐 수 있을까?
 
-      ![](https://images.velog.io/images/earthkingman/post/387dfbb1-1e22-45d1-b4ef-a2e8b30aab52/image.png)
+    **멀티컬럼 인덱스 사용**
 
-      ```sql
-      SELECT *
-      FROM "transaction_transaction"
-      WHERE ("transaction_transaction"."account_id" = 7
-      AND "transaction_transaction"."transaction_type" = '출금')
-      ORDER BY "transaction_transaction"."id" ASC LIMIT 10;
-      ```
+    하나 이상의 키 칼럼 조건으로 같은 집합의 컬럼들이 자주 조회된다면 이러한 칼럼을 모두 포함하는 인덱스를 구성할 수 있습니다. 
 
-      ![](https://images.velog.io/images/earthkingman/post/607957d6-b8ea-4423-b628-592782f58c59/image.png)
+    제 서비스는(계좌번호, 날짜), (계좌번호, 입출금) 등등  다중 조건으로 조회하기 때문에 멀티 컬럼 인덱스가 적합합니다. 
 
-    ​		그리고 조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.그리고
+    
 
-    - 사용된 인덱스
+  - 멀티컬럼 인덱스를 생성하는 기준
 
-    ![](https://images.velog.io/images/earthkingman/post/facdb5a3-6c0f-473b-a948-377f8046f7e8/image.png)
+    중복된 수치를 나타내는 카디널리티가 가장 높은것을 선택해야합니다. 이유는 해당 인덱스로 많은 부분을 걸러내야 하기 때문입니다.
 
-    - 쿼리
+    중복된 수치가 높으면 카디널리티가 낮고 중복된 수치가 낮으면 카디널리티가 높습니다.
 
-    ```sql
-    SELECT *
-    FROM "transaction_history"
-    WHERE ("transaction_history"."account_id" = 7 )
-    ORDER BY "transaction_history"."id" ASC LIMIT 10;
+    
+
+  - 인덱스 생성하기
+
+    모델 자체에 대한 데이터를 추가해야하는 경우 Meta 클래스를 사용합니다. 
+
+    인덱스는 하나의 컬럼으로 작성할 수도 있고, 여러개의 컬럼을 사용해서 멀티 컬럼 인덱스를 만들 수도 있습니다.
+
+    저는 조회에 필요한 'account_id', 'transaction_type', 'created_at' 컬럼을 인덱스로 생성했습니다.
+
+    하지만 주의해야할 것이있습니다. 카디널리티는 높은순에서 낮은순으로 나열해야 합니다.
+
+    
+
+    - 카디널리티가 높은순에서 낮은순  `created_at, account_id, transaction_type`
+
+    ```python
+     class Meta:
+            db_table = 'transaction_history'
+            indexes = [
+                models.Index(
+                    fields=['created_at', 'account_id', 'transaction_type']),
+            ]
     ```
 
-    - 풀스캔
-
-    ![](https://images.velog.io/images/earthkingman/post/92d1891b-5197-48aa-8307-e87de343f9ec/image.png)
-
     
 
-    - 인덱스를 생성하는 기준
+    - 카디널리티가 낮은순에서 높은순 `transaction_type, account_id, created_at, `
 
-      중복된 수치를 나타내는 카디널리티가 가장 높은것을 선택해야합니다. 이유는 해당 인덱스로 많은 부분을 걸러내야 하기 때문입니다.
+    ```python
+     class Meta:
+            db_table = 'transaction_history'
+            indexes = [
+                models.Index(
+                    fields=['transaction_type', 'account_id', 'created_at']),
+            ]
+    ```
 
-      중복된 수치가 높으면 카디널리티가 낮고 중복된 수치가 낮으면 카디널리티가 높습니다.
+    - 결과(데이터 약 100만개)
 
-      
+      조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
 
-    - 인덱스 생성하기
+      이상한 결과가 나왔습니다. 이론적으로는 높은순에서 낮은순이 속도가 더 빨라야하는데 날짜 입출금 검색은 결과가 반대입니다.
 
-      모델 자체에 대한 데이터를 추가해야하는 경우 Meta 클래스를 사용합니다. 
+      날짜 인덱스로 가장 먼저 정렬을 하기 때문에 계좌 인덱스와 종류 인덱스는 인덱스 적용이 되지 않습니다. 
 
-      인덱스는 하나의 컬럼으로 작성할 수도 있고, 여러개의 컬럼을 사용해서 멀티 컬럼 인덱스를 만들 수도 있습니다.
+      이유는 `between`, `like`, `<`, `>` 등 범위 조건 해당 컬럼은 인덱스를 타지만, 그 뒤 인덱스 컬럼들은 인덱스가 사용되지 않기 때문입니다.
 
-      저는 조회에 필요한 'account_id', 'transaction_type', 'created_at' 컬럼을 인덱스로 생성했습니다.
+      그래서 날짜 인덱스로만 데이터에 접근할 수 없고, 낮은순에서 높은순 보다 속도가 느려진것입니다.
 
-      하지만 주의해야할 것이있습니다. 카디널리티는 높은순에서 낮은순으로 나열해야 합니다.
+      | 검색 조건        | 높은순에서 낮은순 (날짜->계좌->종류)            | 낮은순에서 높은순 (종류->계좌->날짜)            |
+      | ---------------- | ----------------------------------------------- | ----------------------------------------------- |
+      | 기본             | 92ms(인덱스 안탐)                               | 93ms  (인덱스 안탐)                             |
+      | 날짜로 검색      | 239ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY | 402ms (인덱스 안탐)                             |
+      | 입출금 검색      | 220ms (인덱스 안탐)                             | 135ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
+      | 날짜 입출금 검색 | 478ms (인덱스 탐) USE TEMP B-TREE FOR ORDER BY  | 150ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
 
-      - 카디널리티가 높은순에서 낮은순  `created_at, account_id, transaction_type`
+      ![](https://images.velog.io/images/earthkingman/post/cc491452-735c-4ed3-a5f0-fe3a55544945/image.png)
 
-      ```python
-       class Meta:
-              db_table = 'transaction_history'
-              indexes = [
-                  models.Index(
-                      fields=['created_at', 'account_id', 'transaction_type']),
-              ]
-      ```
-
-      
-
-      - 카디널리티가 낮은순에서 높은순 `transaction_type, account_id, created_at, `
-
-      ```python
-       class Meta:
-              db_table = 'transaction_history'
-              indexes = [
-                  models.Index(
-                      fields=['transaction_type', 'account_id', 'created_at']),
-              ]
-      ```
-
-      - 결과(데이터 약 100만개)
-
-        조회 쿼리 사용시 인덱스를 태우려면 최소한 **첫번째 인덱스 조건은 조회조건에 포함**되어야만 합니다.
-
-        이상한 결과가 나왔습니다. 이론적으로는 높은순에서 낮은순이 속도가 더 빨라야하는데 날짜 입출금 검색은 결과가 반대입니다.
-
-        날짜 인덱스로 가장 먼저 정렬을 하기 때문에 계좌 인덱스와 종류 인덱스는 인덱스 적용이 되지 않습니다. 
-
-        이유는 `between`, `like`, `<`, `>` 등 범위 조건 해당 컬럼은 인덱스를 타지만, 그 뒤 인덱스 컬럼들은 인덱스가 사용되지 않기 때문입니다.
-
-        그래서 날짜 인덱스로만 데이터에 접근할 수 없고, 낮은순에서 높은순 보다 속도가 느려진것입니다.
-
-        | 검색 조건        | 높은순에서 낮은순 (날짜->계좌->종류)            | 낮은순에서 높은순 (종류->계좌->날짜)            |
-        | ---------------- | ----------------------------------------------- | ----------------------------------------------- |
-        | 기본             | 92ms(인덱스 안탐)                               | 93ms  (인덱스 안탐)                             |
-        | 날짜로 검색      | 239ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY | 402ms (인덱스 안탐)                             |
-        | 입출금 검색      | 220ms (인덱스 안탐)                             | 135ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
-        | 날짜 입출금 검색 | 478ms (인덱스 탐) USE TEMP B-TREE FOR ORDER BY  | 150ms  (인덱스 탐) USE TEMP B-TREE FOR ORDER BY |
-
-        ![](https://images.velog.io/images/earthkingman/post/cc491452-735c-4ed3-a5f0-fe3a55544945/image.png)
-
-        USE TEMP B-TREE FOR ORDER BY의 의미를 파악하지 못했습니다.
+      USE TEMP B-TREE FOR ORDER BY의 의미를 파악하지 못했습니다.
 
     - 결론
 
@@ -936,8 +975,3 @@
 총 45개의 테스트 코드를 작성했고 코드 커버리지는 98%입니다.
 
  <img src = "https://user-images.githubusercontent.com/48669085/148824915-d2b1adff-1db5-4043-a9af-79b18c640201.png" width="800px">
-
-
-
-
-
