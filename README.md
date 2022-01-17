@@ -669,8 +669,8 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
 입금 출금을 동시에 100원씩 1000번  진행했고, 에러메세지는 발생하지 않았습니다.
 
-![image-20220115142724001](/Users/ji-park/Library/Application Support/typora-user-images/image-20220115142724001.png)
 
+<img src="https://images.velog.io/images/earthkingman/post/6d04d452-83ba-4e61-9b37-0e51b2dbdb6b/image.png" width="500px">
 
 
 - 결과
@@ -685,7 +685,7 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
   - 잔액
 
-<img src="https://images.velog.io/images/earthkingman/post/ee8fa856-d79b-45e2-8d6b-99501c0ad229/image.png" width="500px">
+     <img src="https://images.velog.io/images/earthkingman/post/ee8fa856-d79b-45e2-8d6b-99501c0ad229/image.png" width="500px">
 
 
 
