@@ -669,7 +669,6 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
 입금 출금을 동시에 100원씩 1000번  진행했고, 에러메세지는 발생하지 않았습니다.
 
-
 <img src="https://images.velog.io/images/earthkingman/post/6d04d452-83ba-4e61-9b37-0e51b2dbdb6b/image.png" width="500px">
 
 
@@ -685,7 +684,7 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
   - 잔액
 
-     <img src="https://images.velog.io/images/earthkingman/post/ee8fa856-d79b-45e2-8d6b-99501c0ad229/image.png" width="500px">
+    <img src="https://images.velog.io/images/earthkingman/post/ee8fa856-d79b-45e2-8d6b-99501c0ad229/image.png" width="500px">
 
 
 
@@ -716,6 +715,7 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 - 의문점
 
   데이터베이스의 격리수준은 아무런 효과가 없는것인가??
+  https://jupiny.com/2018/11/30/mysql-transaction-isolation-levels/
 
 
 
@@ -811,11 +811,19 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
     
 
-  - 기본 검색은 왜 빨라진걸까?
+  - 인덱스를 사용한 기본 검색은 왜 빨라진걸까?
 
-    단일 인덱스 (account_id)로 바로 데이터에 접근할 수 있기 때문입니다.
+    기존엔 Where문으로 특정 조건의 데이터를 찾기 위해서 테이블의 전체를 조건과 비교해야 하는 '풀 테이블 스캔(Full Table Scan)' 작업이 필요했는데 인덱스를 이용하면 데이터들이 정렬되어 있기 때문에 조건에 맞는 데이터를 빠르게 찾을 수 있습니다.
 
-    그리고 인덱스 테이블은 항상 정렬되어 있습니다. 
+    그리고 직접 그림을 그려보면서 느낀 것은 데이터 삽입, 삭제, 수정을 할 경우엔 계속 인덱스를 정렬해야하기 때문에 속도가 줄어든다는 것을 배웠습니다.
+
+    ```sql
+    SELECT * FROM "transaction_transaction" 
+    WHERE "transaction_transaction"."account_id" = 2 
+    ORDER BY "transaction_transaction"."id" ASC LIMIT 10
+    ```
+
+    
 
     ![](https://images.velog.io/images/earthkingman/post/11c6c55e-be1f-482e-aeca-e3eb02a72f7b/image.png)
 
@@ -825,26 +833,26 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
     이유는 단일 컬럼을 사용하는 경우에는 여러개의 컬럼을 Where절에서 사용한다면  데이터가 바로 접근하지 못합니다. 
 
-    결국 여러번 디스크에 엑세스를 해야하는 문제가 생깁니다. 
+    결국 여러번 디스크에 접근해야하는 문제가 생깁니다. 
 
     
 
-  - 인덱스를 타는 기준이 뭘까? 
+  - 디스크에 접근하는게 속도와 왜 관련이 있는걸까?
 
-    Where 조건에 인덱스 컬럼이 있다면  인덱스를 타게 됩니다.
+    입출력은 물리적으로 액세스 암(Arm)이 움직이면서 헤드를 통해 데이터를 읽고 쓰기 때문에 느립니다.
 
     
 
-  - 여러개의 인덱스 중 어떤 것을 선정하고 어떤 기준으로 선정하는걸까?
+  - 쿼리가 실행될 때 여러개의 인덱스 중 어떤 것을 선정하고 어떤 기준으로 선정하는걸까?
 
     단일컬럼으로 테스트한 결과입니다
 
-    | 검색 조건        | 단일컬럼 인덱스3개  (create_ad),(account_id), (transaction) |
-    | ---------------- | ----------------------------------------------------------- |
-    | 기본             | 66ms (account_id 인덱스 탔음)                               |
-    | 날짜로 검색      | 426ms (account_id 인덱스 탔음)                              |
-    | 입출금 검색      | 254ms (account_id 인덱스 탔음)                              |
-    | 날짜 입출금 검색 | 558ms  (account_id인덱스 탔음)                              |
+    | 검색 조건        | 단일컬럼 인덱스3개  (create_ad),  (account_id),   (transaction_type) |
+    | ---------------- | ------------------------------------------------------------ |
+    | 기본             | 66ms (account_id 인덱스 탔음)                                |
+    | 날짜로 검색      | 426ms (account_id 인덱스 탔음)                               |
+    | 입출금 검색      | 254ms (account_id 인덱스 탔음)                               |
+    | 날짜 입출금 검색 | 558ms  (account_id인덱스 탔음)                               |
 
     단일컬럼 인덱스가 있는 경우에는 where절의 가장 앞에 있는 조건을 우선으로 인덱스를 정한다는 추측을 하였으나
 
@@ -854,7 +862,7 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
     
 
-  - 그럼 내 서비스는 어떻게 해야 조회속도를 높힐 수 있을까?
+  - 그럼 내 서비스는 어떻게 해야 조회 속도를 높힐 수 있을까?
 
     **멀티컬럼 인덱스 사용**
 
@@ -880,7 +888,7 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
     인덱스를 걸 때, 내가 원하는 데이터를 선택하는 과정에서 최대한 많은 데이터가 걸러져야 성능이 좋을 것 입니다.
 
-    중복적인 데이터가 많은 transaction_type 인덱스가첫 번째로 오는 경우에는 비교적 데이터를 걸러내지 못합니다.
+    중복적인 데이터가 많은 transaction_type 인덱스가 첫 번째로 오는 경우에는 비교적 데이터를 걸러내지 못합니다.
 
     ```sql
     select * from transaction
@@ -951,7 +959,9 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
 
       
 
-      USE TEMP B-TREE FOR ORDER BY의 의미를 파악하지 못했습니다.
+      USE TEMP B-TREE FOR ORDER BY의 의미를 파악하지 못했습니다. 근데 공통점은 이게 나오면 속도가 느린것을 알 수가 있었습니다.
+
+      임시로 테이블을 만든다 디스크나 메모리에 
 
     
 
@@ -988,7 +998,15 @@ sqlite는 `select_for_update`을 지원하지 않는다는 정보를 알게되�
       | 입출금 검색      | 58ms (index2)  |
       | 날짜 입출금 검색 | 153ms (index1) |
 
-      
+    
+
+    -  궁금한점
+
+      인덱스 테이블은 메모리에 저장되어 있는 **B-트리** 자료구조입니다. 조금 더 찾아보니깐 데이터베이스 마다 저장되는곳이 다 다르고 상황에 따라서도 다르다는것을 알게 되었습니다. 
+
+      인덱스테이블은 무조건 메모리에 저장된다고 가정해보겠습니다.
+
+      그러면 제 서비스 같은 경우는 created_at 같은 경우는 거의 중복이 되지않습니다. 그러면 1억건의 데이터가 생기면 1억개의 created_at인덱스 데이터가 생길텐데 이것을 다 메모리에 저장할 수 있을지 궁금합니다. 
 
   
 
