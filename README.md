@@ -1,4 +1,4 @@
-## 1. 과제 안내
+## 1. 프로젝트 안내
 
 1. REST API 기능
 
@@ -15,16 +15,16 @@
    - 프로젝트 설치
 
      ```shell
-     $ git clone https://github.com/earthkingman/8Percent
+     $ git clone https://github.com/earthkingman/simple_banking_system
      ```
 
    - 가상환경 생성 및 접속 및 모듈 설치
 
      ```shell
-     $ virtualenv 8percent
-     $ cd 8percent
+     $ virtualenv Bank
+     $ cd Bank
      $ source bin/activate
-     ## ~/8Percent/project
+     ## ~/Bank/project
      pip install -r requirements.txt
      ```
 
